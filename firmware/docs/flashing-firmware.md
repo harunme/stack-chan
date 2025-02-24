@@ -24,7 +24,7 @@ StackChan can change settings such as motor types and pin assignments from the m
 
 | Key               | Description                                                                | Available values                     |
 | ----------------- | -------------------------------------------------------------------------- | ------------------------------------ |
-| driver.type       | Type of motor driver                                                       | "scservo", "rs30x", "pwm", "none", "dinamixel"    |
+| driver.type       | Type of motor driver                                                       | "scservo", "rs30x", "pwm", "none", "dynamixel"    |
 | driver.panId      | ID of the serial servo used for pan axis (horizontal rotation of the neck) | 1~254                                |
 | driver.tiltId     | ID of the serial servo used for tilt axis (vertical rotation of the neck)  | 1~254                                |
 | driver.offsetPan  | Offset of the pan axis                                                     | -90~90                               |
