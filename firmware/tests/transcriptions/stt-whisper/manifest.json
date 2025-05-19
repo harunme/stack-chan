@@ -4,6 +4,7 @@
     "$(MODDABLE)/examples/manifest_typings.json",
     "../../../stackchan/utilities/manifest_utility.json",
     "../../../stackchan/transcriptions/manifest_transcription.json",
+    "../../../stackchan/manifest_microphone.json",
     "../../../stackchan/manifest_typings.json"
   ],
   "modules": {
@@ -15,7 +16,7 @@
     }
   },
   "data": {
-    "*": ["$(MODULES)/crypt/data/ca233", "./speak.wav"]
+    "*": ["$(MODULES)/crypt/data/ca233"]
   },
   "config": {
     "token": "YOUR_API_KEY_HERE"
