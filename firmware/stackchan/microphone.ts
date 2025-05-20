@@ -18,7 +18,8 @@ export default class Microphone {
       let writeOffset = 0
       const audioin = new AudioIn({
         onReadable(size) {
-          const remaining = wavBuffer.byteLength - writeOffset
+          const remaining = dataView.byteLength - writeOffset
+          trace(`${remaining}\n`)
           const chunkSize = Math.min(size, remaining)
           const chunk = this.read(chunkSize)
 
@@ -28,7 +29,7 @@ export default class Microphone {
           } else {
             dataView.set(new Uint8Array(chunk), writeOffset)
             writeOffset += chunkSize
-            if (writeOffset >= wavBuffer.byteLength - HEADER_SIZE) {
+            if (writeOffset >= dataView.byteLength) {
               this.close()
               resolve(wavBuffer)
             }
