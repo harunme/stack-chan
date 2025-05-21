@@ -59,7 +59,7 @@ export default class Microphone {
       headerView.setUint8(14, 't'.charCodeAt(0))
       headerView.setUint8(15, ' '.charCodeAt(0))
       headerView.setUint32(16, 16, true)
-      headerView.setUint16(20, channels, true)
+      headerView.setUint16(20, 1, true) // AudioFormat = 1 (PCM)
       headerView.setUint16(22, channels, true)
       headerView.setUint32(24, sampleRate, true)
       headerView.setUint32(28, byteRate, true)
