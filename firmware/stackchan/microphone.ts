@@ -1,5 +1,4 @@
-import AudioIn from 'pins/audioin'
-import Timer from 'timer'
+import AudioIn from 'embedded:io/audio/in'
 
 export default class Microphone {
   recording: boolean
@@ -13,67 +12,67 @@ export default class Microphone {
       throw new Error('already recording')
     }
     this.recording = true
-    const audio = new AudioIn()
-    const { sampleRate, numChannels, bitsPerSample } = audio
-    const byteRate = sampleRate * numChannels * (bitsPerSample >> 3)
-    const contentLength = (durationMilliSec / 1000) * byteRate
-    const buffer = new ArrayBuffer(44 + contentLength)
-    const view = new DataView(buffer)
-    try {
-      // set header
-      view.setUint8(0, 'R'.charCodeAt(0))
-      view.setUint8(1, 'I'.charCodeAt(0))
-      view.setUint8(2, 'F'.charCodeAt(0))
-      view.setUint8(3, 'F'.charCodeAt(0))
-      view.setUint32(4, 36 + contentLength, true)
-      view.setUint8(8, 'W'.charCodeAt(0))
-      view.setUint8(9, 'A'.charCodeAt(0))
-      view.setUint8(10, 'V'.charCodeAt(0))
-      view.setUint8(11, 'E'.charCodeAt(0))
-      view.setUint8(12, 'f'.charCodeAt(0))
-      view.setUint8(13, 'm'.charCodeAt(0))
-      view.setUint8(14, 't'.charCodeAt(0))
-      view.setUint8(15, ' '.charCodeAt(0))
-      view.setUint32(16, 16, true)
-      view.setUint16(20, 1, true)
-      view.setUint16(22, numChannels, true)
-      view.setUint32(24, sampleRate, true)
-      view.setUint32(28, byteRate, true)
-      view.setUint16(32, (1 * bitsPerSample) >> 3, true)
-      view.setUint16(34, bitsPerSample, true)
-      view.setUint8(36, 'd'.charCodeAt(0))
-      view.setUint8(37, 'a'.charCodeAt(0))
-      view.setUint8(38, 't'.charCodeAt(0))
-      view.setUint8(39, 'a'.charCodeAt(0))
-      view.setUint32(40, contentLength, true)
+    const HEADER_SIZE = 44
 
-      const recordSamples = async (durationMilliSec): Promise<void> => {
-        const readingsPerSecond = 8
-        const sampleCount = Math.floor(audio.sampleRate / readingsPerSecond)
-        let samplesRemaining = (durationMilliSec / 1000) * audio.sampleRate
+    return new Promise((resolve) => {
+      let writeOffset = 0
+      const audioin = new AudioIn({
+        onReadable(size) {
+          const remaining = dataView.byteLength - writeOffset
+          trace(`${remaining}\n`)
+          const chunkSize = Math.min(size, remaining)
+          const chunk = this.read(chunkSize)
 
-        return new Promise((resolve) => {
-          let offset = 44
-          Timer.repeat((id) => {
-            //@ts-ignore
-            audio.read(sampleCount, buffer, offset)
-            offset += sampleCount * (bitsPerSample / 8)
-
-            samplesRemaining -= sampleCount
-            trace(`${samplesRemaining}\n`)
-            if (samplesRemaining <= 0) {
-              Timer.clear(id)
-              resolve()
+          if (!chunk) {
+            this.close()
+            resolve(wavBuffer)
+          } else {
+            dataView.set(new Uint8Array(chunk), writeOffset)
+            writeOffset += chunkSize
+            if (writeOffset >= dataView.byteLength) {
+              this.close()
+              resolve(wavBuffer)
             }
-          }, 1000 / readingsPerSecond)
-        })
-      }
+          }
+        },
+      })
 
-      await recordSamples(durationMilliSec)
-    } finally {
-      this.recording = false
-      audio.close()
-    }
-    return view.buffer
+      // generate header
+      const { sampleRate, channels, bitsPerSample } = audioin
+      const byteRate = sampleRate * channels * (bitsPerSample >> 3)
+      const contentLength = (durationMilliSec / 1000) * byteRate
+      const wavBuffer = new ArrayBuffer(HEADER_SIZE + contentLength)
+      const headerView = new DataView(wavBuffer)
+      const dataView = new Uint8Array(wavBuffer, HEADER_SIZE)
+
+      headerView.setUint8(0, 'R'.charCodeAt(0))
+      headerView.setUint8(1, 'I'.charCodeAt(0))
+      headerView.setUint8(2, 'F'.charCodeAt(0))
+      headerView.setUint8(3, 'F'.charCodeAt(0))
+      headerView.setUint32(4, 36 + contentLength, true)
+      headerView.setUint8(8, 'W'.charCodeAt(0))
+      headerView.setUint8(9, 'A'.charCodeAt(0))
+      headerView.setUint8(10, 'V'.charCodeAt(0))
+      headerView.setUint8(11, 'E'.charCodeAt(0))
+      headerView.setUint8(12, 'f'.charCodeAt(0))
+      headerView.setUint8(13, 'm'.charCodeAt(0))
+      headerView.setUint8(14, 't'.charCodeAt(0))
+      headerView.setUint8(15, ' '.charCodeAt(0))
+      headerView.setUint32(16, 16, true)
+      headerView.setUint16(20, 1, true) // AudioFormat = 1 (PCM)
+      headerView.setUint16(22, channels, true)
+      headerView.setUint32(24, sampleRate, true)
+      headerView.setUint32(28, byteRate, true)
+      headerView.setUint16(32, (channels * bitsPerSample) >> 3, true)
+      headerView.setUint16(34, bitsPerSample, true)
+      headerView.setUint8(36, 'd'.charCodeAt(0))
+      headerView.setUint8(37, 'a'.charCodeAt(0))
+      headerView.setUint8(38, 't'.charCodeAt(0))
+      headerView.setUint8(39, 'a'.charCodeAt(0))
+      headerView.setUint32(40, contentLength, true)
+
+      // start recording
+      audioin.start()
+    })
   }
 }
