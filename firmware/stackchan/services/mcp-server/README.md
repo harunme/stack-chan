@@ -104,6 +104,8 @@ mcconfig -m -d -p lin
 
 ### テスト例
 
+curlコマンドを使用してヘルスチェック、初期化、ツール実行ができます。
+
 ```bash
 # ヘルスチェック
 curl http://localhost:8080/health
@@ -118,6 +120,23 @@ curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":"2","method":"tools/call","params":{"name":"hello_world","arguments":{"name":"Stack-chan"}}}'
 ```
+
+### MCPクライアントからの利用
+
+VSCodeとGitHub Copilot(agentモード)を使う場合、 `.vscode/mcp.json` を以下のように設定します：
+
+```json
+{
+  "servers": {
+    "stackchan-mcp": {
+      "url": "http://<ｽﾀｯｸﾁｬﾝのIPアドレス>:8080/mcp"
+    }
+  }
+}
+```
+
+参考: [Use MCP servers in VS Code](https://code.visualstudio.com/docs/copilot/chat/mcp-servers)
+
 
 ## 技術仕様
 
