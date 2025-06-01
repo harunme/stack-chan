@@ -1,11 +1,11 @@
-import { MCPServerService, type Tool } from 'mcp-server'
+import { MCPServerService } from 'mcp-server'
 
 const EMOTIONS = ['NEUTRAL', 'HAPPY', 'SLEEPY', 'DOUBTFUL', 'SAD', 'ANGRY', 'COLD', 'HOT']
 
 export function onRobotCreated(robot) {
   trace('Starting MCP Server mod\n')
 
-  const mcpTools: Tool[] = [
+  const mcpTools = [
     {
       name: 'set_emotion',
       description: 'Change robot facial expression/emotion',
@@ -18,7 +18,7 @@ export function onRobotCreated(robot) {
         },
       ],
       handler: (args) => {
-        const emotion = args.emotion as string
+        const emotion = args.emotion
 
         if (!emotion || typeof emotion !== 'string') {
           return 'Error: Emotion is required and must be a string'
@@ -49,15 +49,18 @@ export function onRobotCreated(robot) {
         },
       ],
       handler: async (args) => {
-        const message = args.message as string
+        const message = args.message
 
         if (!message || typeof message !== 'string') {
           return 'Error: Message is required and must be a string'
         }
 
         try {
-          await robot.say(message)
-          return `Robot said: "${message}"`
+          const result = await robot.say(message)
+          if (result.success) {
+            return `Robot said: "${result.value}"`
+          }
+          return `Error speaking message: ${result.reason}`
         } catch (error) {
           return `Error speaking message: ${error}`
         }
