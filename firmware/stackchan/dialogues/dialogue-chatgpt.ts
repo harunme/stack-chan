@@ -4,7 +4,7 @@ import Headers from 'headers'
 import type { Maybe } from 'stackchan-util'
 import structuredClone from 'structuredClone'
 
-const API_URL = 'https://api.openai.com/v1/chat/completions'
+const API_URL = 'https://api.openai.com/v1/responses'
 const DEFAULT_MODEL = 'gpt-4o-mini'
 const DEFAULT_CONTEXT: ChatContent[] = [
   {
@@ -34,11 +34,13 @@ const DEFAULT_CONTEXT: ChatContent[] = [
   },
 ]
 
-function isChatContent(c): c is ChatContent {
+function isChatContent(c: unknown): c is ChatContent {
   return (
     c != null &&
+    typeof c === 'object' &&
     'role' in c &&
     (c.role === 'assistant' || c.role === 'user' || c.role === 'system') &&
+    'content' in c &&
     typeof c.content === 'string'
   )
 }
@@ -46,6 +48,21 @@ function isChatContent(c): c is ChatContent {
 type ChatContent = {
   role: 'system' | 'user' | 'assistant'
   content: string
+}
+
+type ResponseContent = {
+  type?: string
+  text?: string
+}
+
+type ResponseOutput = {
+  type?: string
+  role?: string
+  content?: ResponseContent[]
+}
+
+type ResponseObject = {
+  output?: ResponseOutput[]
 }
 
 type ChatGPTDialogueProps = {
@@ -101,7 +118,7 @@ export class ChatGPTDialogue {
   async #sendMessage(message: ChatContent): Promise<unknown> {
     const body = {
       model: this.#model,
-      messages: [...this.#context, ...this.#history, message],
+      input: [...this.#context, ...this.#history, message],
     }
     return fetch(API_URL, {
       method: 'POST',
@@ -120,10 +137,25 @@ export class ChatGPTDialogue {
       })
       .then((buffer) => {
         const body = String.fromArrayBuffer(buffer)
-        return JSON.parse(body, ['choices', 'message', 'role', 'content'])
+        return JSON.parse(body, ['output', 'content', 'type', 'text', 'role'])
       })
       .then((obj) => {
-        return obj.choices?.[0].message
+        return this.#extractResponseMessage(obj)
       })
+  }
+
+  #extractResponseMessage(responseObj: unknown): ChatContent | null {
+    const parsedResponse = responseObj as ResponseObject
+    const output = parsedResponse.output?.[0]
+    if (output?.type === 'message' && output.role === 'assistant') {
+      const textContent = output.content?.find((c: ResponseContent) => c.type === 'output_text')
+      if (textContent?.text) {
+        return {
+          role: 'assistant',
+          content: textContent.text,
+        }
+      }
+    }
+    throw new Error('Invalid response format from Responses API')
   }
 }
