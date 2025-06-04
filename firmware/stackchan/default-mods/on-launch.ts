@@ -28,6 +28,9 @@ async function waitForKey(): Promise<boolean> {
     }
   } else {
     isPressed = () => {
+      if (!globalThis.button || !globalThis.button.c) {
+        return false
+      }
       return !globalThis.button.c.read()
     }
   }

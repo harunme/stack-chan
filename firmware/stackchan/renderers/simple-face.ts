@@ -130,3 +130,60 @@ export class Renderer extends RendererBase {
     )
   }
 }
+
+export class SmallFaceRenderer extends RendererBase {
+  constructor(option) {
+    super(option)
+    this.marginX = 0
+    this.marginY = 0
+    this.filters = [
+      createBlinkModifier({
+        openMin: 400,
+        openMax: 5000,
+        closeMin: 200,
+        closeMax: 400,
+      }),
+      createBreathModifier({ duration: 6000 }),
+      createSaccadeModifier({ updateMin: 300, updateMax: 2000, gain: 0.2 }),
+    ]
+    const layer1 = new Layer({ colorName: 'primary' })
+    this.layers.push(layer1)
+    layer1.addPart(
+      'leftEye',
+      createEyePart({
+        cx: 36,
+        cy: 53,
+        side: 'left',
+        radius: 4,
+      }),
+    )
+    layer1.addPart('rightEye', createEyePart({ cx: 92, cy: 54, side: 'right', radius: 4 }))
+    layer1.addPart(
+      'mouth',
+      createMouthPart({ cx: 64, cy: 80, minWidth: 20, maxWidth: 36, minHeight: 3, maxHeight: 23 }),
+    )
+
+    const layer2 = new Layer({ colorName: 'secondary' })
+    this.layers.push(layer2)
+    layer2.addPart(
+      'leftEyelid',
+      createEyelidPart({
+        cx: 36,
+        cy: 53,
+        side: 'left',
+        width: 12,
+        height: 12,
+      }),
+    )
+    layer2.addPart(
+      'rightEyelid',
+      createEyelidPart({
+        cx: 92,
+        cy: 54,
+        side: 'right',
+        width: 12,
+        height: 12,
+      }),
+    )
+  }
+}

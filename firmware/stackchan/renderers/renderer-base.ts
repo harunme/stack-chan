@@ -186,6 +186,9 @@ export class RendererBase {
   lastContext: FaceContext
   currentContext: FaceContext
 
+  marginX = 60
+  marginY = 60
+
   constructor(option?: { poco?: PocoPrototype }) {
     this._poco = option?.poco ?? new Poco(screen, { rotation: config.rotation })
     this.decorators = []
@@ -211,7 +214,7 @@ export class RendererBase {
     }
     if (shouldRender) {
       if (!shouldClear) {
-        poco.begin(60, 60, poco.width - 120, poco.height - 120)
+        poco.begin(this.marginX, this.marginY, poco.width - this.marginX * 2, poco.height - this.marginY * 2)
       }
       this.renderFace(interval, this.currentContext)
       ;[this.currentContext, this.lastContext] = [this.lastContext, this.currentContext]
@@ -244,8 +247,8 @@ export class RendererBase {
   }
   renderFace(tick: number, face: FaceContext, poco: PocoPrototype = this._poco): void {
     const bg = poco.makeColor(...face.theme.secondary)
-    poco.clip(60, 60, poco.width - 120, poco.height - 120)
-    poco.fillRectangle(bg, 60, 60, poco.width - 120, poco.height - 120)
+    poco.clip(this.marginX, this.marginY, poco.width - this.marginX * 2, poco.height - this.marginY * 2)
+    poco.fillRectangle(bg, this.marginX, this.marginY, poco.width - this.marginX * 2, poco.height - this.marginY * 2)
     for (const layer of this.layers) {
       layer.render(tick, poco, face)
     }
