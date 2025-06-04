@@ -13,7 +13,7 @@ import { TTS as VoiceVoxWebTTS } from 'tts-voicevox-web'
 import { TTS as ElevenLabsTTS } from 'tts-elevenlabs'
 import { TTS as OpenAITTS } from 'tts-openai'
 import defaultMod, { type StackchanMod } from 'default-mods/mod'
-import { Renderer as SimpleRenderer } from 'simple-face'
+import { Renderer as SimpleRenderer, SmallFaceRenderer } from 'simple-face'
 import { Renderer as DogFaceRenderer } from 'dog-face'
 import { NetworkService } from 'network-service'
 import Touch from 'touch'
@@ -57,6 +57,7 @@ function createRobot() {
   const renderers = new Map<string, new (param: unknown) => Renderer>([
     ['dog', DogFaceRenderer],
     ['simple', SimpleRenderer],
+    ['small-face', SmallFaceRenderer],
   ])
 
   // TODO: select driver/tts/renderer by mod

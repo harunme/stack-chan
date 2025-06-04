@@ -123,6 +123,46 @@
         "virtualButton": true
       }
     },
+    "esp32/m5atom_s3": {
+      "config": {
+        "renderer": {
+          "type": "small-face"
+        },
+        "driver": {
+          "type": "none"
+        }
+      }
+    },
+    "esp32/m5atom_s3r": {
+      "config": {
+        "renderer": {
+          "type": "small-face"
+        },
+        "driver": {
+          "type": "none"
+        }
+      }
+    },
+    "esp32/m5atom_s3_echo_base": {
+      "config": {
+        "renderer": {
+          "type": "small-face"
+        },
+        "driver": {
+          "type": "none"
+        }
+      }
+    },
+    "esp32/m5atom_s3r_echo_base": {
+      "config": {
+        "renderer": {
+          "type": "small-face"
+        },
+        "driver": {
+          "type": "none"
+        }
+      }
+    },
     "mac/m5stack": {
       "config": {
         "driver": {
