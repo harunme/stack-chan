@@ -1,6 +1,6 @@
 import { ChatGPTDialogue } from 'dialogue-chatgpt'
 import Whisper from 'stt-whisper'
-import { loadPreferences } from 'stackchan-util'
+import loadPreferences from 'loadPreference'
 import { createHeartDecorator, createSweatDecorator } from 'decorator'
 
 const heartDecorator = createHeartDecorator({ x: 20, y: 20 })
