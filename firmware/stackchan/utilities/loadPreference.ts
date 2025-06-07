@@ -9,9 +9,9 @@ const modConfig: Record<string, any> = Modules.has('mod/config') ? Modules.impor
 
 export default function loadPreferences(category: keyof typeof DOMAIN) {
   const mcPreference = structuredClone(config[category.toLowerCase()] ?? {})
-  const modPreferene = structuredClone(modConfig[category.toLowerCase()] ?? {})
+  const modPreference = structuredClone(modConfig[category.toLowerCase()] ?? {})
 
-  const preference = { ...mcPreference, ...modPreferene }
+  const preference = { ...mcPreference, ...modPreference }
 
   const keys = PREF_KEYS.filter((s) => s[0] === category)
   for (const [domain, key, ctor] of keys) {
