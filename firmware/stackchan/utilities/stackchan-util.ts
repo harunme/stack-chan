@@ -32,7 +32,7 @@ export function generateDeviceSeed(): number {
   return hash
 }
 
-export function generateDeviceSpecificColor(seed: number): [number[], number[]] {
+export function colorsFromSeed(seed: number): [number[], number[]] {
   /**
    * Generates a color based on a seed value.
    * @param seed - the seed value to be used for color generation.
