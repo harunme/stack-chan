@@ -1,4 +1,47 @@
 import Timer from 'timer'
+import getMacAddress from 'mac-address'
+
+function HashCodeFromString(str: string): number {
+  /**
+   * Generates a hash code from a string.
+   * @param str - the string to be hashed.
+   * @returns a hash code as a number.
+   * This function uses a simple hash algorithm that shifts the hash value
+   * and adds the character code of each character in the string.
+   * The result is a 32-bit signed integer.
+   */
+  let hash = 0
+  if (str.length === 0) return hash
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash & hash
+  }
+
+  return Math.abs(hash)
+}
+
+export function getDeviceSeed(): number {
+  /**
+   * Generates a seed value based on the device's MAC address.
+   * @returns a seed value as a number.
+   */
+  const mac = getMacAddress()
+  const hash = HashCodeFromString(mac)
+  return hash
+}
+
+export function getDeviceSpecificColor(seed: number): [number[], number[]] {
+  /**
+   * Generates a color based on a seed value.
+   * @param seed - the seed value to be used for color generation.
+   * @returns an array of two colors, each represented as an array of RGB values.
+   */
+  const primary = hslToRgb(((seed >>> 24) * 360) / 255, 1, 0.1 + (((seed >>> 16) & 0xff) * 0.8) / 255)
+  const secondary = hslToRgb((((seed >>> 8) & 0xff) * 360) / 255, 1, 0.1 + ((seed & 0xff) * 0.8) / 255)
+  return [primary, secondary]
+}
 
 export async function asyncWait(ms) {
   return new Promise((resolve) => {

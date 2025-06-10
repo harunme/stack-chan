@@ -8,7 +8,10 @@
   "files": {
     "include": ["stackchan", "mods", "tests", "scripts"],
     "ignoreUnknown": false,
-    "ignore": ["stackchan/speeches/calculate-power.js"]
+    "ignore": [
+      "stackchan/speeches/calculate-power.js",
+      "stackchan/utilities/esp32/mac-address.js"
+    ]
   },
   "formatter": {
     "enabled": true,
