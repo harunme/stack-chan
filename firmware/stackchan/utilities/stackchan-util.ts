@@ -8,7 +8,7 @@ function HashCodeFromString(str: string): number {
    * @returns a hash code as a number.
    * This function uses a simple hash algorithm that shifts the hash value
    * and adds the character code of each character in the string.
-   * The result is a 32-bit signed integer.
+   * The result is a 32-bit unsigned integer.
    */
   let hash = 0
   if (str.length === 0) return hash
@@ -22,7 +22,7 @@ function HashCodeFromString(str: string): number {
   return Math.abs(hash)
 }
 
-export function getDeviceSeed(): number {
+export function generateDeviceSeed(): number {
   /**
    * Generates a seed value based on the device's MAC address.
    * @returns a seed value as a number.
@@ -32,7 +32,7 @@ export function getDeviceSeed(): number {
   return hash
 }
 
-export function getDeviceSpecificColor(seed: number): [number[], number[]] {
+export function generateDeviceSpecificColor(seed: number): [number[], number[]] {
   /**
    * Generates a color based on a seed value.
    * @param seed - the seed value to be used for color generation.
