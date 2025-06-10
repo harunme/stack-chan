@@ -27,9 +27,16 @@ export function generateDeviceSeed(): number {
    * Generates a seed value based on the device's MAC address.
    * @returns a seed value as a number.
    */
-  const mac = getMacAddress()
-  const hash = HashCodeFromString(mac)
-  return hash
+  try {
+    const mac = getMacAddress()
+    if (!mac || typeof mac !== 'string') {
+      throw new Error('Invalid MAC address returned')
+    }
+    return HashCodeFromString(mac)
+  } catch (error) {
+    trace(`Failed to get MAC address: ${error}, using fallback seed\n`)
+    return HashCodeFromString(`fallback-${Date.now()}`)
+  }
 }
 
 export function colorsFromSeed(seed: number): [number[], number[]] {
