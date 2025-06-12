@@ -135,8 +135,8 @@ async function main() {
   if (globalThis.Host?.Button && !globalThis.button) {
     globalThis.button = {
       a: new SimButton(globalThis.Host.Button.a),
-      b: new SimButton(globalThis.Host.Button.b),
-      c: new SimButton(globalThis.Host.Button.c),
+      ...(globalThis.Host.Button.b && { b: new SimButton(globalThis.Host.Button.b) }),
+      ...(globalThis.Host.Button.c && { c: new SimButton(globalThis.Host.Button.c) }),
     }
   }
   await asyncWait(100)
