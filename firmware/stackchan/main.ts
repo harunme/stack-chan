@@ -133,10 +133,11 @@ async function checkAndConnectWiFi() {
 
 async function main() {
   if (globalThis.Host?.Button && !globalThis.button) {
+    const { a, b, c } = globalThis.Host.Button
     globalThis.button = {
-      a: new SimButton(globalThis.Host.Button.a),
-      ...(globalThis.Host.Button.b && { b: new SimButton(globalThis.Host.Button.b) }),
-      ...(globalThis.Host.Button.c && { c: new SimButton(globalThis.Host.Button.c) }),
+      ...(a && { a: new SimButton(a) }),
+      ...(b && { b: new SimButton(b) }),
+      ...(c && { c: new SimButton(c) }),
     }
   }
   await asyncWait(100)
