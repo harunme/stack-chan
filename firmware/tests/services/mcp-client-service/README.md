@@ -19,11 +19,11 @@ The dummy server provides these test tools:
 - **add**: Adds two numbers together
 - **get_status**: Returns server status
 
-## Running the Test
+## Runnint (Linux)
 
 ```bash
-npm run build
-# Flash the test to a device
+cd tests/services/mcp-client-service
+mcconfig -m -d -p lin
 ```
 
 ## Expected Output
