@@ -2,6 +2,14 @@ import { MCPClientService } from 'mcp-client'
 import { MCPServerService, type Tool } from 'mcp-server'
 import Timer from 'timer'
 
+async function asyncWait(ms: number): Promise<void> {
+  return new Promise((resolve) =>
+    Timer.set(() => {
+      resolve()
+    }, ms),
+  )
+}
+
 // Test tools for the dummy server
 const testTools: Tool[] = [
   {
@@ -69,13 +77,13 @@ async function testMCPClient(): Promise<void> {
   })
 
   // Wait a bit for server to start
-  await new Promise((resolve) => Timer.set(resolve, 1000))
+  await asyncWait(1000)
 
   try {
     // Create client
     trace('Creating MCP client...\n')
     const client = new MCPClientService({
-      baseUrl: 'http://localhost:8081',
+      url: 'http://localhost:8081/mcp',
       timeout: 10000,
     })
 
@@ -92,6 +100,9 @@ async function testMCPClient(): Promise<void> {
       return
     }
 
+    // Wait a bit before next test to allow garbage collection
+    await asyncWait(30)
+
     // Test 2: List tools
     trace('\nTest 2: List tools\n')
     try {
@@ -106,6 +117,8 @@ async function testMCPClient(): Promise<void> {
       return
     }
 
+    await asyncWait(30)
+
     // Test 3: Call echo tool
     trace('\nTest 3: Call echo tool\n')
     try {
@@ -115,6 +128,8 @@ async function testMCPClient(): Promise<void> {
     } catch (error) {
       trace(`✗ Echo tool call failed: ${error}\n`)
     }
+
+    await asyncWait(30)
 
     // Test 4: Call add tool
     trace('\nTest 4: Call add tool\n')
@@ -126,6 +141,8 @@ async function testMCPClient(): Promise<void> {
       trace(`✗ Add tool call failed: ${error}\n`)
     }
 
+    await asyncWait(30)
+
     // Test 5: Call get_status tool
     trace('\nTest 5: Call get_status tool\n')
     try {
@@ -136,6 +153,8 @@ async function testMCPClient(): Promise<void> {
       trace(`✗ Get status tool call failed: ${error}\n`)
     }
 
+    await asyncWait(30)
+
     // Test 6: Test error handling - call non-existent tool
     trace('\nTest 6: Error handling - call non-existent tool\n')
     try {
@@ -144,6 +163,8 @@ async function testMCPClient(): Promise<void> {
     } catch (error) {
       trace(`✓ Expected error caught: ${error}\n`)
     }
+
+    await asyncWait(30)
 
     // Test 7: Test initialization check
     trace('\nTest 7: Test initialization check\n')
@@ -155,12 +176,15 @@ async function testMCPClient(): Promise<void> {
       trace(`✓ Expected error caught (not initialized): ${error}\n`)
     }
 
+    await asyncWait(30)
+
     // Test 8: Re-initialize after reset
     trace('\nTest 8: Re-initialize after reset\n')
     try {
       await client.initialize()
       trace('✓ Re-initialize after reset successful\n')
 
+      await asyncWait(30)
       // Test that tools work again
       const echoResult = await client.callTool('echo', { message: 'Test after reset' })
       trace(`✓ Tool call after reset successful: ${echoResult.content[0].text}\n`)
