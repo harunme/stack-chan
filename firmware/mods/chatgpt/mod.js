@@ -1,5 +1,6 @@
 import Timer from 'timer'
-import { randomBetween, loadPreferences } from 'stackchan-util'
+import { randomBetween } from 'stackchan-util'
+import loadPreferences from 'loadPreference'
 import WebSocket from 'WebSocket'
 import { ChatGPTDialogue } from 'dialogue-chatgpt'
 

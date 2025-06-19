@@ -1,25 +1,9 @@
-import { type DOMAIN, PREF_KEYS } from 'consts'
-import Preference from 'preference'
-import structuredClone from 'structuredClone'
-import config from 'mc/config'
 import Timer from 'timer'
 
 export async function asyncWait(ms) {
   return new Promise((resolve) => {
     Timer.set(resolve, ms)
   })
-}
-
-export function loadPreferences(category: keyof typeof DOMAIN) {
-  const preference = structuredClone(config[category.toLowerCase()]) ?? {}
-  const keys = PREF_KEYS.filter((s) => s[0] === category)
-  for (const [domain, key, ctor] of keys) {
-    const value = Preference.get(domain, key)
-    if (value != null) {
-      preference[key] = ctor(value)
-    }
-  }
-  return preference
 }
 
 export function normRand(m: number, s: number): number {
