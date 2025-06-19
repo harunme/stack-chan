@@ -18,11 +18,7 @@
     "*": ["$(MODULES)/crypt/data/ca233"]
   },
   "config": {
-    "mcp": {
-      "hoge": {
-        "url": "http://127.0.0.1:3001/mcp"
-      }
-    }
+    "mcp": {}
   },
   "creation": {
     "static": 110592,

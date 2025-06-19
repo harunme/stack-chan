@@ -75,6 +75,18 @@ function isValidOption(option: unknown): option is { url: string } {
 async function runTest() {
   trace('=== ChatGPT Dialogue with Tools and MCP Test ===\n')
 
+  /**
+   * Configure the MCP server URL in manifest.json under config.mcp
+   * ```manifest.json
+   * "config": {
+   *   "mcp": {
+   *    "your-mcp-server": {
+   *      "url": "https://your-mcp-server.example.com/mcp"
+   *    }
+   *   }
+   * }
+   * ```
+   */
   // Create MCP clients if URL is provided
   const mcpClients: MCPClientService[] = []
   if (mcp != null) {
