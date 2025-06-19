@@ -49,7 +49,6 @@ interface MCPResponse extends MCPMessage {
  */
 export interface MCPClientConfig {
   url: string
-  timeout?: number
 }
 
 /**
@@ -103,14 +102,12 @@ interface ToolsCallResult {
  */
 export class MCPClientService {
   #url: string
-  #timeout: number
   #requestId = 0
   #initialized = false
   #sessionId?: string
 
   constructor(config: MCPClientConfig) {
     this.#url = config.url.endsWith('/') ? config.url.slice(0, -1) : config.url
-    this.#timeout = config.timeout ?? 30000
   }
 
   /**

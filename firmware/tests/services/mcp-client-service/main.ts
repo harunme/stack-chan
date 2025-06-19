@@ -84,7 +84,6 @@ async function testMCPClient(): Promise<void> {
     trace('Creating MCP client...\n')
     const client = new MCPClientService({
       url: 'http://localhost:8081/mcp',
-      timeout: 10000,
     })
 
     // Test 1: Initialize client
