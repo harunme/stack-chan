@@ -6,26 +6,51 @@ import { createHeartDecorator, createSweatDecorator } from 'decorator'
 const heartDecorator = createHeartDecorator({ x: 20, y: 20 })
 const sweatDecorator = createSweatDecorator({ x: 20, y: 20 })
 
-const CONTEXT = [
-  {
-    role: 'system',
-    content:
-      'You are "スタックちゃん (Stack-chan)", the palm-sized super kawaii companion robot baby. You must respond in a short sentence.',
-  },
-  {
-    role: 'assistant',
-    content: 'ぼく、スタックちゃん！ねえ、お話しようよ！',
-  },
-]
+const INSTRUCTIONS = `
+You are "スタックちゃん (Stack-chan)", the palm-sized super kawaii companion robot baby.
+You must respond in a short sentence.
+The sentence is speech only. Any symbols, emojis, or other non-speech characters must not be included.
+
+**Emotions:**
+You should exporess emotionswith set_emotion tool.
+`
 
 export function onRobotCreated(robot) {
+  const setEmotionTool = {
+    name: 'set_emotion',
+    description: "Set the robot's emotion",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        emotion: {
+          type: 'string',
+          description:
+            "Emotion to set for the robot one of enum: ['HAPPY', 'SAD', 'ANGRY', 'SURPRISED', 'NEUTRAL', 'DOUBTFUL']",
+        },
+      },
+      required: ['emotion'],
+    },
+    execute: async (args) => {
+      const emotion = args.emotion
+      if (
+        typeof emotion === 'string' &&
+        ['HAPPY', 'SAD', 'ANGRY', 'SURPRISED', 'NEUTRAL', 'DOUBTFUL'].includes(emotion)
+      ) {
+        robot.setEmotion(emotion)
+        return `Emotion set to ${emotion}`
+      }
+      throw new Error('Invalid emotion')
+    },
+  }
+
   let talking = false
 
   // Integrate ChatGPT and Whisper
   const aiPrefs = loadPreferences('ai')
   const dialogue = new ChatGPTDialogue({
     apiKey: aiPrefs.token,
-    context: CONTEXT,
+    instructions: INSTRUCTIONS,
+    tools: [setEmotionTool],
   })
   const stt = new Whisper({
     apiKey: aiPrefs.token,
@@ -90,12 +115,6 @@ export function onRobotCreated(robot) {
       return
     }
     trace(`completion text:${result.value}\n`)
-
-    // set up speeching face
-    robot.renderer.removeDecorator(decorator)
-    decorator = heartDecorator
-    robot.renderer.addDecorator(decorator)
-    robot.setEmotion('HAPPY')
 
     // speech
     await robot.say(result.value)
