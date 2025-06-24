@@ -45,8 +45,10 @@ export function colorsFromSeed(seed: number): [number[], number[]] {
    * @param seed - the seed value to be used for color generation.
    * @returns an array of two colors, each represented as an array of RGB values.
    */
-  const primary = hslToRgb(((seed >>> 24) * 360) / 255, 1, 0.1 + (((seed >>> 16) & 0xff) * 0.8) / 255)
-  const secondary = hslToRgb((((seed >>> 8) & 0xff) * 360) / 255, 1, 0.1 + ((seed & 0xff) * 0.8) / 255)
+  const lightness1 = 0.1 + (((seed >>> 16) & 0xff) * 0.8) / 255
+  const lightness2 = lightness1 < 0.5 ? lightness1 + 0.4 : lightness1 - 0.4
+  const primary = hslToRgb(((seed >>> 24) * 360) / 255, 1, lightness1)
+  const secondary = hslToRgb((((seed >>> 8) & 0xff) * 360) / 255, 1, Math.max(0.1, Math.min(0.9, lightness2)))
   return [primary, secondary]
 }
 
