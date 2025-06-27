@@ -19,7 +19,8 @@ import { NetworkService } from 'network-service'
 import Touch from 'touch'
 import Microphone from 'microphone'
 import Tone from 'tone'
-import { loadPreferences, asyncWait } from 'stackchan-util'
+import { asyncWait } from 'stackchan-util'
+import loadPreferences from 'loadPreference'
 
 // wrapper button class for simulator
 class SimButton {
@@ -59,8 +60,6 @@ function createRobot() {
     ['simple', SimpleRenderer],
     ['small-face', SmallFaceRenderer],
   ])
-
-  // TODO: select driver/tts/renderer by mod
 
   const errors: string[] = []
 

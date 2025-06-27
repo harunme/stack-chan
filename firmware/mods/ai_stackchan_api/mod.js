@@ -1,6 +1,7 @@
 import { HttpServerService, Response } from 'http-server-service'
 import { ChatGPTDialogue } from 'dialogue-chatgpt'
-import { randomBetween, asyncWait, loadPreferences } from 'stackchan-util'
+import { randomBetween, asyncWait } from 'stackchan-util'
+import loadPreferences from 'loadPreference'
 import config from 'mc/config'
 import {
   createBalloonDecorator,
