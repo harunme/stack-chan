@@ -102,7 +102,7 @@ export const createHeartDecorator: FaceDecoratorFactory<{
   const xScale = width / 40
   const yScale = height / 40
 
-  return (tick, poco, { theme }, end = false) => {
+  return (_tick, poco, { theme }, end = false) => {
     poco.begin(x, y, width * xScale, height * yScale)
     const fg = poco.makeColor(...theme.primary)
     const bg = poco.makeColor(...theme.secondary)
@@ -146,7 +146,7 @@ export const createAngryDecorator: FaceDecoratorFactory<{
   const xScale = width / 40
   const yScale = height / 40
 
-  return (tick, poco, { theme }, end = false) => {
+  return (_tick, poco, { theme }, end = false) => {
     poco.begin(x, y, width * xScale, height * yScale)
     const fg = poco.makeColor(...theme.primary)
     const bg = poco.makeColor(...theme.secondary)

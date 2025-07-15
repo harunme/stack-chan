@@ -23,7 +23,6 @@ export default class STT {
     try {
       const boundary = `--------------------------${UUID().replaceAll('-', '').substring(0, 22)}`
       const header =
-        // biome-ignore lint/style/useTemplate: too long sentence
         `--${boundary}\r\n` +
         `Content-Disposition: form-data; name="model"\r\n\r\n${this.model}\r\n` +
         `--${boundary}\r\n` +

@@ -23,7 +23,7 @@ export default class Tone {
       audio.enqueue(0, AudioOut.Callback, 1)
       audio.start()
 
-      audio.callback = (id) => {
+      audio.callback = (_id) => {
         audio.close()
         resolve()
       }
