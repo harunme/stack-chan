@@ -5,7 +5,6 @@ import fs from 'fs'
 import path from 'path'
 import { hideBin } from 'yargs/helpers'
 import { writeFile } from 'fs/promises'
-import { stringify } from 'querystring'
 
 /**
  * get Speech data from VoiceVox server

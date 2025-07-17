@@ -3,14 +3,6 @@ import config from 'mc/config'
 import Timer from 'timer'
 
 // type aliases
-type Status = {
-  angle: number
-  time: number
-  speed: number
-  current: number
-  temperature: number
-  voltage: number
-}
 type TORQUE_OFF = 0
 type TORQUE_ON = 1
 type TORQUE_BREAK = 2
@@ -50,9 +42,9 @@ const PACKET_TYPE = {
   COMMAND: 0xfaaf,
   RESPONSE: 0xfddf,
 } as const
-type PacketType = (typeof PACKET_TYPE)[keyof typeof PACKET_TYPE]
 
 // utilities
+// biome-ignore lint/correctness/noUnusedVariables: utility function for future use
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v))
 }
@@ -62,6 +54,7 @@ function be(v: number): [number, number] {
 function eb(l: number, h: number) {
   return ((h << 8) & 0xff00) + (l & 0xff)
 }
+// biome-ignore lint/correctness/noUnusedVariables: utility function for future use
 function le(v: number): [number, number] {
   return [(v & 0xff00) >> 8, v & 0xff]
 }

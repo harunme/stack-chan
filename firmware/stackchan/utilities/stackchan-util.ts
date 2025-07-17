@@ -1,4 +1,56 @@
 import Timer from 'timer'
+import getMacAddress from 'mac-address'
+
+function HashCodeFromString(str: string): number {
+  /**
+   * Generates a hash code from a string.
+   * @param str - the string to be hashed.
+   * @returns a hash code as a number.
+   * This function uses a simple hash algorithm that shifts the hash value
+   * and adds the character code of each character in the string.
+   * The result is a 32-bit unsigned integer.
+   */
+  let hash = 0
+  if (str.length === 0) return hash
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash >>> 0 // Convert to 32-bit unsigned integer
+  }
+
+  return hash
+}
+
+export function generateDeviceSeed(): number {
+  /**
+   * Generates a seed value based on the device's MAC address.
+   * @returns a seed value as a number.
+   */
+  try {
+    const mac = getMacAddress()
+    if (!mac || typeof mac !== 'string') {
+      throw new Error('Invalid MAC address returned')
+    }
+    return HashCodeFromString(mac)
+  } catch (error) {
+    trace(`Failed to get MAC address: ${error}, using fallback seed\n`)
+    return HashCodeFromString(`fallback-${Date.now()}`)
+  }
+}
+
+export function colorsFromSeed(seed: number): [number[], number[]] {
+  /**
+   * Generates a color based on a seed value.
+   * @param seed - the seed value to be used for color generation.
+   * @returns an array of two colors, each represented as an array of RGB values.
+   */
+  const lightness1 = 0.1 + (((seed >>> 16) & 0xff) * 0.8) / 255
+  const lightness2 = lightness1 < 0.5 ? lightness1 + 0.4 : lightness1 - 0.4
+  const primary = hslToRgb(((seed >>> 24) * 360) / 255, 1, lightness1)
+  const secondary = hslToRgb((((seed >>> 8) & 0xff) * 360) / 255, 1, Math.max(0.1, Math.min(0.9, lightness2)))
+  return [primary, secondary]
+}
 
 export async function asyncWait(ms) {
   return new Promise((resolve) => {

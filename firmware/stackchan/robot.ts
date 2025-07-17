@@ -1,5 +1,5 @@
 import Timer from 'timer'
-import { Vector3, type Pose, Rotation, type Maybe, noop, randomBetween } from 'stackchan-util'
+import { Vector3, type Pose, Rotation, type Maybe, noop, randomBetween, generateDeviceSeed } from 'stackchan-util'
 import { type FaceContext, type Emotion, createFaceContext, type FaceDecorator } from 'renderer-base'
 import type Digital from 'embedded:io/digital'
 import type Touch from 'touch'
@@ -84,6 +84,7 @@ export class Robot {
       right: Pose
     }
   }
+  seed: number
   #power: number
   #tts: TTS
   #driver: Driver
@@ -102,6 +103,7 @@ export class Robot {
   #balloon: FaceDecorator
   updating: boolean
   constructor(params: RobotConstructorParam<ButtonName>) {
+    this.seed = generateDeviceSeed()
     this.useRenderer(params.renderer)
     this.useDriver(params.driver)
     this.useTTS(params.tts)
@@ -251,7 +253,7 @@ export class Robot {
     })
   }
 
-  async record(durationSec?: number): Promise<ArrayBuffer> {
+  async record(_durationSec?: number): Promise<ArrayBuffer> {
     if (!this.#microphone) {
       throw Error('This device does not support a microphone.')
     }
@@ -427,7 +429,7 @@ export class Robot {
    * Get the current pose from the Driver
    * and trigger move if necessary to see the gaze point.
    */
-  async updatePose(id) {
+  async updatePose(_id) {
     if (this.updating || this.#paused) {
       return
     }

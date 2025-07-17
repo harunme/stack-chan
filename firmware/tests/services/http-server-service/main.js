@@ -2,7 +2,7 @@ import { HttpServerService, Response } from 'http-server-service'
 
 const app = new HttpServerService()
 
-app.get('/response', (c) => {
+app.get('/response', (_c) => {
   return new Response('Thank you for coming', {
     status: 201,
     headers: {

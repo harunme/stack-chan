@@ -45,7 +45,7 @@ export class TTS {
         },
         onPlayed: (buffer) => {
           const power = calculatePower(buffer)
-          this.onPlayed?.(power)
+          onPlayed?.(power)
         },
         onReady(this: ResourceStreamer, state) {
           trace(`Ready: ${state}\n`)

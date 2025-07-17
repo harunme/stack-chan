@@ -71,8 +71,14 @@
       "calculate-power": [
         "./typings/calculate-power"
       ],
+      "mac-address": [
+        "./typings/mac-address"
+      ],
       "default-mods/on-robot-created": [
         "./stackchan/default-mods/on-robot-created"
+      ],
+      "mcp-client": [
+        "./stackchan/services/mcp-client/mcp-client"
       ]
     },
     "types": [

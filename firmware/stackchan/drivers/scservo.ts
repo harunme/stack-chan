@@ -23,8 +23,11 @@ function el(h: number, l: number) {
   return ((h << 8) & 0xff00) + (l & 0xff)
 }
 
+// biome-ignore lint/correctness/noUnusedVariables: constant for future use
 const BROADCAST_ID = 0xfe // 254
+// biome-ignore lint/correctness/noUnusedVariables: constant for future use
 const MAX_ID = 0xfc // 252
+// biome-ignore lint/correctness/noUnusedVariables: constant for future use
 const SCS_END = 0
 
 const COMMAND = {
