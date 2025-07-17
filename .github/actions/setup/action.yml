@@ -26,7 +26,7 @@ runs:
       run: |
         API_URL="https://api.github.com/repos/Moddable-OpenSource/moddable/commits/public"
         RESPONSE=$(curl -s -H "Authorization: Bearer ${{ github.token }}" $API_URL)
-        LATEST_COMMIT=$(echo $RESPONSE | jq -r '.sha')
+        LATEST_COMMIT=$(echo $RESPONSE | jq -r '.sha' | cut -c1-12)
         echo "Latest commit of Moddable: $LATEST_COMMIT"
         echo "moddable_cache_key=${{ runner.os }}-moddable-$LATEST_COMMIT" >> $GITHUB_ENV
       shell: bash
