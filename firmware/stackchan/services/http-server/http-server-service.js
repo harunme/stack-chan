@@ -158,7 +158,7 @@ class HttpServerService {
         } else {
           response = await handler(context)
         }
-      } catch (e) {
+      } catch (_e) {
         response = context.text('Internal Server Error', 500)
       } finally {
         connection.respondWith(response)

@@ -253,7 +253,7 @@ export class Robot {
     })
   }
 
-  async record(durationSec?: number): Promise<ArrayBuffer> {
+  async record(_durationSec?: number): Promise<ArrayBuffer> {
     if (!this.#microphone) {
       throw Error('This device does not support a microphone.')
     }
@@ -429,7 +429,7 @@ export class Robot {
    * Get the current pose from the Driver
    * and trigger move if necessary to see the gaze point.
    */
-  async updatePose(id) {
+  async updatePose(_id) {
     if (this.updating || this.#paused) {
       return
     }

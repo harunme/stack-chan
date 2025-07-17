@@ -14,10 +14,10 @@ const UUID = new Bytes('CFFD85BB-67E0-9CD4-B2D0-BE5A7ECAC915'.replaceAll('-', ''
 
 class Advertiser extends BLEServer {
   onReady() {}
-  onConnected(connection) {
+  onConnected(_connection) {
     this.stopAdvertising()
   }
-  onDisconnected(connection) {}
+  onDisconnected(_connection) {}
 }
 
 export function onRobotCreated(robot) {

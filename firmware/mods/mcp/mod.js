@@ -68,7 +68,7 @@ export function onRobotCreated(robot) {
     },
   ]
 
-  const mcpServer = new MCPServerService({
+  const _mcpServer = new MCPServerService({
     port: 8080,
     tools: mcpTools,
   })

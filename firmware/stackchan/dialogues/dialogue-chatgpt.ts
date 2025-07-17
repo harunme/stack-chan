@@ -40,13 +40,6 @@ type ExtractedResponse = {
   toolsUsed: string[]
 }
 
-type OpenAITool = {
-  type: 'function'
-  name: string
-  description: string
-  parameters: Record<string, unknown>
-}
-
 // Simplified flow: initial message -> tool execution (if needed) -> final response
 
 const API_URL = 'https://api.openai.com/v1/responses'
