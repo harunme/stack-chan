@@ -8,7 +8,7 @@ function linearInEaseOut(fraction: number): number {
   return ((fraction - 0.25) ** 2 * 16) / 9
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// biome-ignore lint/correctness/noUnusedVariables: utility function for future use
 function linearInLinearOut(fraction: number): number {
   if (fraction < 0.5) {
     return 1 - fraction * 2

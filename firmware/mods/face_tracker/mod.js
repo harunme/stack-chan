@@ -16,7 +16,7 @@ function onRobotCreated(robot, device) {
     host: 'unitv2.local',
     port: 80,
   })
-  const request = client.request({
+  const _request = client.request({
     method: 'POST',
     path: '/func/result',
     onReadable(count) {
@@ -24,7 +24,7 @@ function onRobotCreated(robot, device) {
       try {
         const text = decoder.decode(this.read(count))
         result = JSON.parse(text.split('|')[0])
-      } catch (e) {
+      } catch (_e) {
         trace('parse failed.\n')
         return
       }

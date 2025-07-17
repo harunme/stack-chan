@@ -1,10 +1,7 @@
-import { HttpServerService, Response } from 'http-server-service'
+import { HttpServerService } from 'http-server-service'
 import { ChatGPTDialogue } from 'dialogue-chatgpt'
-import { randomBetween, asyncWait } from 'stackchan-util'
 import loadPreferences from 'loadPreference'
-import config from 'mc/config'
 import {
-  createBalloonDecorator,
   createBubbleDecorator,
   createHeartDecorator,
   createAngryDecorator,
@@ -105,7 +102,7 @@ function onRobotCreated(robot) {
   server.post('/speech', async (c) => {
     const formData = await c.req.formData()
     const say = formData.say
-    const lang = formData.lang
+    const _lang = formData.lang
     await robot.say(say)
 
     return c.text('OK')
@@ -114,7 +111,7 @@ function onRobotCreated(robot) {
   server.post('/chat', async (c) => {
     const formData = await c.req.formData()
     const text = formData.text
-    const lang = formData.lang
+    const _lang = formData.lang
     const response = await chatAndSay(robot, text)
     return c.text(response)
   })
@@ -166,7 +163,7 @@ function onRobotCreated(robot) {
 
   server.get('/apikey_set', async (c) => {
     const formData = await c.req.formData()
-    const { openai, sttapikey, voicetext, voicevox } = formData
+    const { openai: _openai, sttapikey: _sttapikey, voicetext: _voicetext, voicevox: _voicevox } = formData
 
     return c.text('Not Implemented', 501)
   })
@@ -176,7 +173,7 @@ function onRobotCreated(robot) {
   })
 
   server.post('/role_set', async (c) => {
-    const role = await c.req.text()
+    const _role = await c.req.text()
     return c.text('Not Implemented', 501)
   })
 
@@ -186,7 +183,7 @@ function onRobotCreated(robot) {
 
   server.post('/setting', async (c) => {
     const formData = await c.req.formData()
-    const volume = Number(formData.volume)
+    const _volume = Number(formData.volume)
     return c.text('Not Implemented', 501)
   })
 

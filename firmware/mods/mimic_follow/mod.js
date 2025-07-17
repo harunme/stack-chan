@@ -8,7 +8,7 @@ function onRobotCreated(robot) {
     p: 0.0,
     r: 0.0,
   }
-  mdns.monitor('_http._tcp', (service, instance) => {
+  mdns.monitor('_http._tcp', (_service, instance) => {
     if (instance.name === 'stackchan') {
       for (const s of instance.txt) {
         const entry = s.split('=')
