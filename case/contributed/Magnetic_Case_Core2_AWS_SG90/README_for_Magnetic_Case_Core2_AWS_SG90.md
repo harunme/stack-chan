@@ -3,7 +3,7 @@
 
 # Notice
 This model has been confirmed with M5Stack Core2/AWS and SG90 servo motor.
-Another M5Stack models are potentially not compatible. Please check before molding.
+Other M5Stack models are potentially not compatible. Please check before molding.
 This shell design doesn't require disassembly of M5Stack. 
 
 # Appearance
@@ -30,8 +30,8 @@ Route/form the servo cable as shown in the images below. No cable length adjustm
 
 # Wiring
 Use the Grove PORT servo connection board kit designed by Koumei-san:
-https://b-sky-lab.booth.pm/items/5194419
-https://github.com/kim-xps12/m5stack_board_grove_port_servo
+[Grove PORT servo connection board kit (Booth)](https://b-sky-lab.booth.pm/items/5194419)
+[Grove PORT servo connection board kit (GitHub)](https://github.com/kim-xps12/m5stack_board_grove_port_servo)
 
 # Other required parts
 An Unbuckled Grove Cable 10 cm is required for other wiring with M5Stack.

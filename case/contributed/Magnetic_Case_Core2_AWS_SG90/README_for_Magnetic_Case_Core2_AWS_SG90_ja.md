@@ -2,7 +2,7 @@
 日本語 | [English](./README_for_Magnetic_Case_Core2_AWS_SG90.md)
 
 # 注意事項
-本モデルはM5Stack Core2/AWSとSG90サーボモータの組み合わせで動作確認を行いました。異なる種類のM5Stackとは互換性が無い可能性があります。シェルの造形前にご確認をお願いします。
+本モデルはM5Stack Core2/AWSとSG90サーボモーターの組み合わせで動作確認を行いました。異なる種類のM5Stackとは互換性が無い可能性があります。シェルの造形前にご確認をお願いします。
 本モデルを使用するにあたり、M5Stackを分解する必要はありません。
 
 # 外観
@@ -24,9 +24,8 @@
 ![Cable forming2](docs/images/cable_forming2.jpg)
 ![Cable forming3](docs/images/cable_forming3.jpg)
 
-サーボの配線は孔明さん設計のGrove PORTサーボ接続基板キットを使用します。
-https://b-sky-lab.booth.pm/items/5194419
-https://github.com/kim-xps12/m5stack_board_grove_port_servo
+サーボの配線は孔明さん設計の[Grove PORTサーボ接続基板キット](https://b-sky-lab.booth.pm/items/5194419)を使用します。
+[Grove PORTサーボ接続基板キット (GitHub)](https://github.com/kim-xps12/m5stack_board_grove_port_servo)
 
-その他M5Stackとの配線にUnbuckled Grove Cable 10cmが必要です。
+その他M5Stackとの配線に[Unbuckled Grove Cable 10cm](https://www.switch-science.com/catalog/grove-cable-10cm-10-pack/)が必要です。
 <br>
