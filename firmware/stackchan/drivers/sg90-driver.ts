@@ -1,8 +1,33 @@
-import Servo from 'pins/servo'
+import PWM from 'embedded:io/pwm'
 import type { Maybe, Rotation } from 'stackchan-util'
 import Timer from 'timer'
 
 const INTERVAL = 16.5
+
+class Servo {
+  #pwm: PWM
+  #min: number
+  #max: number
+
+  constructor(param: { pin: number; min?: number; max?: number }) {
+    const TAREGET_PERIOD = 18
+    this.#pwm = new PWM({
+      pin: param.pin,
+      hz: Math.floor(1000 / TAREGET_PERIOD),
+    })
+
+    const min = param.min ?? 500
+    const max = param.max ?? 2400
+    const range = 2 ** this.#pwm.resolution - 1
+    this.#min = Math.ceil((min / 1000 / TAREGET_PERIOD) * range)
+    this.#max = Math.floor((max / 1000 / TAREGET_PERIOD) * range)
+  }
+
+  write(degrees: number): void {
+    const value = Math.round(this.#min + (degrees / 180) * (this.#max - this.#min))
+    this.#pwm.write(value)
+  }
+}
 
 function easeInOutSine(ratio) {
   return -(Math.cos(Math.PI * ratio) - 1) / 2

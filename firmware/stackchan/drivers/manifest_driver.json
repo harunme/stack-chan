@@ -2,7 +2,7 @@
   "include": [
     "$(MODDABLE)/examples/manifest_base.json",
     "$(MODDABLE)/examples/manifest_typings.json",
-    "$(MODULES)/pins/servo/manifest.json",
+    "$(MODDABLE)/modules/io/manifest.json",
     "../utilities/manifest_utility.json"
   ],
   "modules": {
