@@ -35,4 +35,3 @@ Use the Grove PORT servo connection board kit designed by Koumei-san:
 
 # Other required parts
 An Unbuckled Grove Cable 10 cm is required for other wiring with M5Stack.
-<br>
