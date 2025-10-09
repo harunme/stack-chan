@@ -27,4 +27,4 @@
 サーボの配線は孔明さん設計の[Grove PORTサーボ接続基板キット](https://b-sky-lab.booth.pm/items/5194419)を使用します。
 [Grove PORTサーボ接続基板キット (GitHub)](https://github.com/kim-xps12/m5stack_board_grove_port_servo)
 
-その他M5Stackとの配線に[Unbuckled Grove Cable 10cm](https://www.switch-science.com/catalog/grove-cable-10cm-10-pack/)が必要です。
+その他M5Stackとの配線に[Unbuckled Grove Cable 10cm](https://www.switch-science.com/products/5213)が必要です。
