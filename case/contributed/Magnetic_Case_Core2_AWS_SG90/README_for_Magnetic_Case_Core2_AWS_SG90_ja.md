@@ -28,4 +28,3 @@
 [Grove PORTサーボ接続基板キット (GitHub)](https://github.com/kim-xps12/m5stack_board_grove_port_servo)
 
 その他M5Stackとの配線に[Unbuckled Grove Cable 10cm](https://www.switch-science.com/catalog/grove-cable-10cm-10-pack/)が必要です。
-<br>
