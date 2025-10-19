@@ -58,7 +58,7 @@ async function waitForKey(): Promise<boolean> {
     let count = 0
     const handle = Timer.repeat(() => {
       if (isPressed()) {
-        if (touch?.sapmle) touch.close()
+        if (touch?.sample) touch.close()
         Timer.clear(handle)
         resolve(true)
       }
