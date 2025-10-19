@@ -208,7 +208,7 @@ class Dynamixel {
     packetHandler = new PacketHandler({
       receive: config.serial?.receive ?? 6,
       transmit: config.serial?.transmit ?? 7,
-      baud: baud ?? 1_000_000,
+      baud: baud,
       port: 1,
     })
   }
