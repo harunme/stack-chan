@@ -1,6 +1,7 @@
+//  PWM Stub for Simulator
 class PWM {
   close() {}
-  write() {}
+  write(_value) {}
   get hz() {
     return 0
   }
