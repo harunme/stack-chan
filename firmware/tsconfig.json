@@ -69,7 +69,7 @@
         "./stackchan/default-mods/on-launch"
       ],
       "calculate-power": [
-        "./stackchans/speeches/calculate-power"
+        "./stackchan/speeches/calculate-power"
       ],
       "mac-address": [
         "./utilities/esp32/mac-address"
