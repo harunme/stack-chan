@@ -211,9 +211,7 @@ class SCServo {
     this.#txBuf[idx] = checksum(this.#txBuf.slice(0, idx))
     idx++
     // trace(`writing: ${this.#txBuf.slice(0, idx)}\n`)
-    for (let i = 0; i < idx; i++) {
-      packetHandler.write(this.#txBuf[i])
-    }
+    packetHandler.write(this.#txBuf.subarray(0, idx))
     return new Promise((resolve, _reject) => {
       const id = Timer.set(() => {
         this.#promises.shift()
