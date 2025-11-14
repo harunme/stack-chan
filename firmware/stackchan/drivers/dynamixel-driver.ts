@@ -64,15 +64,22 @@ class PControl {
 export class DynamixelDriver {
   _pan: Dynamixel
   _tilt: Dynamixel
-  _handler: ReturnType<typeof Timer.repeat>
+  _nextTimer?: ReturnType<typeof Timer.set>
   _controls: PControl[]
   _initialized: boolean
   _torque: boolean
+  _running: boolean
+  _attached: boolean
+  _interval: number
   constructor(param: DynamixelDriverProps) {
     this._pan = new Dynamixel({ id: param.panId, baudrate: param.baud })
     this._tilt = new Dynamixel({ id: param.tiltId, baudrate: param.baud })
     this._controls = [new PControl(this._pan, 0.15, 80, 'pan'), new PControl(this._tilt, 4, 800, 'tilt')]
     this._torque = true
+    this._initialized = false
+    this._running = false
+    this._attached = false
+    this._interval = 125
   }
 
   async setTorque(torque: boolean): Promise<void> {
@@ -80,27 +87,56 @@ export class DynamixelDriver {
   }
 
   onAttached(): void {
-    this._handler = Timer.repeat(this.control.bind(this), 125)
+    if (this._attached) {
+      return
+    }
+    this._attached = true
+    this._scheduleNext()
   }
 
   onDetached(): void {
-    Timer.clear(this._handler)
+    this._attached = false
+    if (this._nextTimer) {
+      Timer.clear(this._nextTimer)
+      this._nextTimer = undefined
+    }
   }
 
   async control(): Promise<void> {
-    if (!this._initialized) {
-      this._initialized = true
-      for (const c of this._controls) {
-        await c.init()
+    if (this._running) {
+      return
+    }
+    this._running = true
+    try {
+      if (!this._initialized) {
+        this._initialized = true
+        for (const c of this._controls) {
+          await c.init()
+        }
+        await this._pan.setProfileAcceleration(20)
+        await this._pan.setProfileVelocity(100)
+        trace('servo initialized\n')
       }
-      await this._pan.setProfileAcceleration(20)
-      await this._pan.setProfileVelocity(100)
-      trace('servo initialized\n')
+      // TODO: use bulk write/read instruction for performance
+      for (const c of this._controls) {
+        await c.update()
+      }
+    } finally {
+      this._running = false
+      if (this._attached) {
+        this._scheduleNext()
+      }
     }
-    // TODO: use bulk write/read instruction for performance
-    for (const c of this._controls) {
-      await c.update()
+  }
+
+  _scheduleNext(): void {
+    if (this._nextTimer || !this._attached) {
+      return
     }
+    this._nextTimer = Timer.set(() => {
+      this._nextTimer = undefined
+      void this.control()
+    }, this._interval)
   }
 
   async applyRotation(ori: Rotation): Promise<void> {
