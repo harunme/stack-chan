@@ -2,6 +2,8 @@ import Serial from 'embedded:io/serial'
 import config from 'mc/config'
 import Timer from 'timer'
 
+import { PayloadBuffer } from './payload-buffer'
+
 // type aliases
 type TORQUE_OFF = 0
 type TORQUE_ON = 1
@@ -68,10 +70,10 @@ function el(h: number, l: number) {
  * @returns checksum number
  */
 // file local methods
-function checksum(arr: number[] | Uint8Array): number {
+function checksum(buffer: Uint8Array, start: number, end: number): number {
   let sum = 0
-  for (const n of arr) {
-    sum ^= n
+  for (let i = start; i < end; i++) {
+    sum ^= buffer[i]
   }
   return sum
 }
@@ -84,8 +86,9 @@ const RX_STATE = {
 type RxState = (typeof RX_STATE)[keyof typeof RX_STATE]
 
 class PacketHandler extends Serial {
-  #callbacks: Map<number, (bytes: number[]) => void>
+  #callbacks: Map<number, (buffer: Uint8Array, length: number) => void>
   #rxBuffer: Uint8Array
+  #payloadBuffer: PayloadBuffer
   #idx: number
   #state: RxState
   #count = 0
@@ -120,16 +123,18 @@ class PacketHandler extends Serial {
             this.#count -= 1
             if (this.#count === 0) {
               // trace('received packet!\n')
-              const cs = checksum(rxBuf.slice(2, this.#idx - 1)) & 0xff
+              const cs = checksum(rxBuf, 2, this.#idx - 1) & 0xff
               const id = rxBuf[2]
               const header = el(rxBuf[0], rxBuf[1])
               if (header === PACKET_TYPE.COMMAND) {
-                // trace(`got echo.  ... ${rxBuf.slice(0, this.#idx)} ignoring\n`)
+                // trace(`got echo.  ... ${rxBuf.subarray(0, this.#idx)} ignoring\n`)
               } else if (cs === rxBuf[this.#idx - 1] && this.#callbacks.has(id)) {
                 // trace(`got response for ${id}. triggering callback \n`)
-                this.#callbacks.get(id)?.(Array.from(rxBuf.slice(7, this.#idx - 1)))
+                const payloadLength = this.#idx - 8
+                const payload = this.#payloadBuffer.copyFrom(rxBuf, payloadLength, 7)
+                this.#callbacks.get(id)?.(payload, payloadLength)
               } else {
-                trace(`unknown packet for ${id} ... ${rxBuf.slice(0, this.#idx)}. ignoring\n`)
+                trace(`unknown packet for ${id} ... ${rxBuf.subarray(0, this.#idx)}. ignoring\n`)
               }
               this.#idx = 0
               this.#state = RX_STATE.SEEK
@@ -148,15 +153,16 @@ class PacketHandler extends Serial {
       format: 'number',
       onReadable,
     })
-    this.#callbacks = new Map<number, () => void>()
+    this.#callbacks = new Map<number, (buffer: Uint8Array, length: number) => void>()
     this.#rxBuffer = new Uint8Array(64)
+    this.#payloadBuffer = new PayloadBuffer(32)
     this.#idx = 0
     this.#state = RX_STATE.SEEK
   }
   hasCallbackOf(id: number): boolean {
     return this.#callbacks.has(id)
   }
-  registerCallback(id: number, callback: (bytes: number[]) => void) {
+  registerCallback(id: number, callback: (buffer: Uint8Array, length: number) => void) {
     this.#callbacks.set(id, callback)
   }
   removeCallback(id: number) {
@@ -171,19 +177,22 @@ type RS30XConstructorParam = {
 let packetHandler: PacketHandler = null
 class RS30X {
   #id: number
-  #onCommandRead: (values: number[]) => void
+  #onCommandRead: (buffer: Uint8Array, length: number) => void
   #txBuf: Uint8Array
-  #promises: Array<[(values: number[]) => void, Timer]>
+  #promises: Array<[(values: Uint8Array | undefined) => void, Timer]>
+  #responseBuffer: PayloadBuffer
   #offset: number
   constructor({ id }: RS30XConstructorParam) {
     this.#id = id
     this.#promises = []
     this.#offset = 0
-    this.#onCommandRead = (values) => {
+    this.#responseBuffer = new PayloadBuffer(32)
+    this.#onCommandRead = (values, length) => {
       if (this.#promises.length > 0) {
         const [resolver, timeoutId] = this.#promises.shift()
         Timer.clear(timeoutId)
-        resolver(values)
+        const payload = this.#responseBuffer.copyFrom(values, length)
+        resolver(payload)
       }
     }
     this.#txBuf = new Uint8Array(64)
@@ -211,7 +220,7 @@ class RS30X {
     return this.#id
   }
 
-  async #sendCommand(...values: number[]): Promise<number[] | undefined> {
+  async #sendCommand(...values: number[]): Promise<Uint8Array | undefined> {
     this.#txBuf[0] = 0xfa
     this.#txBuf[1] = 0xaf
     this.#txBuf[2] = this.#id
@@ -220,9 +229,9 @@ class RS30X {
       this.#txBuf[idx] = v
       idx++
     }
-    this.#txBuf[idx] = checksum(this.#txBuf.slice(2, idx))
+    this.#txBuf[idx] = checksum(this.#txBuf, 2, idx)
     idx++
-    // trace(`writing: ${this.#txBuf.slice(0, idx)}\n`)
+    // trace(`writing: ${this.#txBuf.subarray(0, idx)}\n`)
     // trace('sending: [')
     // for (let i = 0; i < idx; i++) {
     //   trace('0x' + this.#txBuf[i].toString(16).padStart(2, '0') + ', ')
