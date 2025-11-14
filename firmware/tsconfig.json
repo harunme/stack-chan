@@ -3,6 +3,7 @@
     "allowJs": true,
     "baseUrl": "./",
     "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
     "module": "es2022",
     "lib": [
       "es2024"
