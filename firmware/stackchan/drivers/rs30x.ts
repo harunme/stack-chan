@@ -233,7 +233,9 @@ class RS30X {
     //   trace('0x' + this.#txBuf[i].toString(16).padStart(2, '0') + ', ')
     // }
     // trace(']\n')
-    packetHandler.write(this.#txBuf.subarray(0, idx))
+    for (let i = 0; i < idx; i++) {
+      packetHandler.write(this.#txBuf[i])
+    }
     return this.#waitSlot.wait(100, () => {
       trace('timeout.\n')
     })

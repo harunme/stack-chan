@@ -298,7 +298,9 @@ class Dynamixel {
     }
     trace('\n')
     */
-    packetHandler.write(this.#txBuf.subarray(0, idx))
+    for (let i = 0; i < idx; i++) {
+      packetHandler.write(this.#txBuf[i])
+    }
     return this.#waitSlot.wait(200, () => {
       trace('timeout.\n')
     })

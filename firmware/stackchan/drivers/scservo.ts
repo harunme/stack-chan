@@ -216,7 +216,9 @@ class SCServo {
     this.#txBuf[idx] = checksum(this.#txBuf, idx)
     idx++
     // trace(`writing: ${this.#txBuf.subarray(0, idx)}\n`)
-    packetHandler.write(this.#txBuf.subarray(0, idx))
+    for (let i = 0; i < idx; i++) {
+      packetHandler.write(this.#txBuf[i])
+    }
     return this.#waitSlot.wait(40, () => {
       trace('timeout.\n')
     })
