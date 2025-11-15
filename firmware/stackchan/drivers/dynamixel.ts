@@ -1,5 +1,7 @@
 import Serial from 'embedded:io/serial'
 import Timer from 'timer'
+
+import SingleWaitSlot from './internal/single-wait-slot'
 import config from 'mc/config'
 
 type Maybe<T> =
@@ -215,16 +217,14 @@ class Dynamixel {
   #id: number
   #onCommandRead: (values: Uint8Array) => void
   #txBuf: Uint8Array
-  #promises: Array<[(values: Uint8Array) => void, Timer]>
+  #waitSlot: SingleWaitSlot<Uint8Array>
+  #queueTail: Promise<void>
   constructor({ id, baudrate = 1_000_000 }: DynamixelConstructorParam) {
     this.#id = id
-    this.#promises = []
+    this.#waitSlot = new SingleWaitSlot<Uint8Array>(Timer.set, Timer.clear)
+    this.#queueTail = Promise.resolve()
     this.#onCommandRead = (values) => {
-      if (this.#promises.length > 0) {
-        const [resolver, timeoutId] = this.#promises.shift()
-        Timer.clear(timeoutId)
-        resolver(values)
-      }
+      this.#waitSlot.resolve(values)
     }
     this.#txBuf = new Uint8Array(64)
     if (packetHandler == null) {
@@ -247,7 +247,11 @@ class Dynamixel {
     return this.#id
   }
 
-  async #sendCommand(instruction: Instruction, address?: Address, ...parameters: number[]): Promise<Uint8Array> {
+  async #dispatchCommand(
+    instruction: Instruction,
+    address?: Address,
+    ...parameters: number[]
+  ): Promise<Uint8Array | undefined> {
     this.#txBuf[0] = 0xff
     this.#txBuf[1] = 0xff
     this.#txBuf[2] = 0xfd
@@ -289,14 +293,22 @@ class Dynamixel {
     for (let i = 0; i < idx; i++) {
       packetHandler.write(this.#txBuf[i])
     }
-    return new Promise((resolve) => {
-      const id = Timer.set(() => {
-        this.#promises.shift()
-        trace(`timeout. ${this.#promises.length}\n`)
-        resolve(undefined)
-      }, 200)
-      this.#promises.push([resolve, id])
+    return this.#waitSlot.wait(200, () => {
+      trace('timeout.\n')
     })
+  }
+
+  async #sendCommand(
+    instruction: Instruction,
+    address?: Address,
+    ...parameters: number[]
+  ): Promise<Uint8Array | undefined> {
+    const run = this.#queueTail.then(() => this.#dispatchCommand(instruction, address, ...parameters))
+    this.#queueTail = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
   }
 
   /**
@@ -439,6 +451,9 @@ class Dynamixel {
    */
   async readModelNumber(): Promise<number> {
     const values = await this.#sendCommand(INSTRUCTION.READ, ADDRESS.MODEL_NUMBER, 2)
+    if (values == null || values.length < 4) {
+      throw new Error('response corrupted')
+    }
     return el(values[0], values[1])
   }
 
@@ -448,7 +463,7 @@ class Dynamixel {
    */
   async readFirmwareVersion(): Promise<Maybe<{ version: number }>> {
     const values = await this.#sendCommand(INSTRUCTION.READ, ADDRESS.VERSION_OF_FIRMWARE, 1)
-    if (values != null && values[1] === 0) {
+    if (values != null && values.length >= 3 && values[1] === 0) {
       return {
         success: true,
         value: {
@@ -468,6 +483,9 @@ class Dynamixel {
    */
   async readOffsetAngle(): Promise<number> {
     const values = await this.#sendCommand(INSTRUCTION.READ, ADDRESS.HOMING_OFFSET, 2)
+    if (values == null || values.length < 4) {
+      throw new Error('response corrupted')
+    }
     const isCcw = Boolean(values[0] & 0x8000)
     let offset = ((values[1] & 0x7fff) << 8) | values[0]
     if (isCcw) {
@@ -482,7 +500,7 @@ class Dynamixel {
    */
   async readPresentCurrent(): Promise<Maybe<{ current: number }>> {
     const values = await this.#sendCommand(INSTRUCTION.READ, ADDRESS.PRESENT_CURRENT, 2)
-    if (values != null) {
+    if (values != null && values.length >= 4) {
       if (values[1] !== 0) {
         return {
           success: false,
@@ -509,7 +527,7 @@ class Dynamixel {
    */
   async readPresentVelocity(): Promise<Maybe<number>> {
     const values = await this.#sendCommand(INSTRUCTION.READ, ADDRESS.PRESENT_VELOCITY, 4)
-    if (values != null) {
+    if (values != null && values.length >= 4) {
       if (values[1] !== 0) {
         return {
           success: false,
@@ -533,7 +551,7 @@ class Dynamixel {
    */
   async readPresentPosition(): Promise<Maybe<number>> {
     const values = await this.#sendCommand(INSTRUCTION.READ, ADDRESS.PRESENT_POSITION, 4)
-    if (values != null) {
+    if (values != null && values.length >= 4) {
       if (values[1] !== 0) {
         return {
           success: false,

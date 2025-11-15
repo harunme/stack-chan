@@ -2,6 +2,8 @@ import Serial from 'embedded:io/serial'
 import config from 'mc/config'
 import Timer from 'timer'
 
+import SingleWaitSlot from './internal/single-wait-slot'
+
 type Maybe<T> =
   | {
       success: true
@@ -162,18 +164,16 @@ class SCServo {
   #id: number
   #onCommandRead: (values: number[]) => void
   #txBuf: Uint8Array
-  #promises: Array<[(values: number[]) => void, Timer]>
+  #waitSlot: SingleWaitSlot<number[]>
+  #queueTail: Promise<void>
   #offset: number
   constructor({ id }: SCServoConstructorParam) {
     this.#id = id
-    this.#promises = []
+    this.#waitSlot = new SingleWaitSlot<number[]>(Timer.set, Timer.clear)
+    this.#queueTail = Promise.resolve()
     this.#offset = 0
     this.#onCommandRead = (values) => {
-      if (this.#promises.length > 0) {
-        const [resolver, timeoutId] = this.#promises.shift()
-        Timer.clear(timeoutId)
-        resolver(values)
-      }
+      this.#waitSlot.resolve(values)
     }
     this.#txBuf = new Uint8Array(64)
     if (packetHandler == null) {
@@ -196,7 +196,7 @@ class SCServo {
     return this.#id
   }
 
-  async #sendCommand(command: Command, address: Address, ...values: number[]): Promise<number[]> {
+  async #dispatchCommand(command: Command, address: Address, ...values: number[]): Promise<number[] | undefined> {
     this.#txBuf[0] = 0xff
     this.#txBuf[1] = 0xff
     this.#txBuf[2] = this.#id
@@ -214,14 +214,18 @@ class SCServo {
     for (let i = 0; i < idx; i++) {
       packetHandler.write(this.#txBuf[i])
     }
-    return new Promise((resolve, _reject) => {
-      const id = Timer.set(() => {
-        this.#promises.shift()
-        trace(`timeout. ${this.#promises.length}\n`)
-        resolve(undefined)
-      }, 40)
-      this.#promises.push([resolve, id])
+    return this.#waitSlot.wait(40, () => {
+      trace('timeout.\n')
     })
+  }
+
+  async #sendCommand(command: Command, address: Address, ...values: number[]): Promise<number[] | undefined> {
+    const run = this.#queueTail.then(() => this.#dispatchCommand(command, address, ...values))
+    this.#queueTail = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
   }
 
   async #lock(): Promise<unknown> {
@@ -239,6 +243,9 @@ class SCServo {
    */
   async readOffsetAngle(): Promise<number> {
     const values = await this.#sendCommand(COMMAND.READ, ADDRESS.OFFSET, 2)
+    if (values == null || values.length < 2) {
+      throw new Error('response corrupted')
+    }
     const isCcw = Boolean(values[0] & 0x8000)
     let offset = ((values[0] & 0x7fff) << 8) | values[1]
     if (isCcw) {

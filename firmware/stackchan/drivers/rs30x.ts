@@ -2,6 +2,8 @@ import Serial from 'embedded:io/serial'
 import config from 'mc/config'
 import Timer from 'timer'
 
+import SingleWaitSlot from './internal/single-wait-slot'
+
 // type aliases
 type TORQUE_OFF = 0
 type TORQUE_ON = 1
@@ -173,18 +175,16 @@ class RS30X {
   #id: number
   #onCommandRead: (values: number[]) => void
   #txBuf: Uint8Array
-  #promises: Array<[(values: number[]) => void, Timer]>
+  #waitSlot: SingleWaitSlot<number[]>
+  #queueTail: Promise<void>
   #offset: number
   constructor({ id }: RS30XConstructorParam) {
     this.#id = id
-    this.#promises = []
+    this.#waitSlot = new SingleWaitSlot<number[]>(Timer.set, Timer.clear)
+    this.#queueTail = Promise.resolve()
     this.#offset = 0
     this.#onCommandRead = (values) => {
-      if (this.#promises.length > 0) {
-        const [resolver, timeoutId] = this.#promises.shift()
-        Timer.clear(timeoutId)
-        resolver(values)
-      }
+      this.#waitSlot.resolve(values)
     }
     this.#txBuf = new Uint8Array(64)
     if (packetHandler == null) {
@@ -211,7 +211,7 @@ class RS30X {
     return this.#id
   }
 
-  async #sendCommand(...values: number[]): Promise<number[] | undefined> {
+  async #dispatchCommand(...values: number[]): Promise<number[] | undefined> {
     this.#txBuf[0] = 0xfa
     this.#txBuf[1] = 0xaf
     this.#txBuf[2] = this.#id
@@ -231,14 +231,18 @@ class RS30X {
     for (let i = 0; i < idx; i++) {
       packetHandler.write(this.#txBuf[i])
     }
-    return new Promise((resolve, _reject) => {
-      const id = Timer.set(() => {
-        this.#promises.shift()
-        trace(`timeout. ${this.#promises.length}\n`)
-        resolve(undefined)
-      }, 100)
-      this.#promises.push([resolve, id])
+    return this.#waitSlot.wait(100, () => {
+      trace('timeout.\n')
     })
+  }
+
+  async #sendCommand(...values: number[]): Promise<number[] | undefined> {
+    const run = this.#queueTail.then(() => this.#dispatchCommand(...values))
+    this.#queueTail = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
   }
 
   async setMaxTorque(maxTorque: number): Promise<void> {
