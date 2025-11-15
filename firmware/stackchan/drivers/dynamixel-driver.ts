@@ -13,14 +13,16 @@ class PControl {
   servo: Dynamixel
   gain: number
   saturation: number
+  minCurrent: number
   goalPosition: number
   _offset: number
   _lastGoalPosition: number
   presentPosition: number
-  constructor(servo: Dynamixel, gain, saturation, name = 'servo') {
+  constructor(servo: Dynamixel, gain: number, saturation: number, minCurrent: number, name = 'servo') {
     this.servo = servo
     this.gain = gain
     this.saturation = saturation
+    this.minCurrent = minCurrent
     this.name = name
     this.goalPosition = 0
     this.presentPosition = 0
@@ -36,27 +38,25 @@ class PControl {
       trace(`${this.name} ... failed to read initial position for offset detection\n`)
     }
     this.goalPosition = 2048
+    // Use CURRENT_BASED_POSITION mode for dynamic torque control
     await this.servo.setOperatingMode(OPERATING_MODE.CURRENT_BASED_POSITION)
     await this.servo.setTorque(true)
   }
 
   async update() {
-    // trace(`${this.name} ... update\n`)
     if (this._lastGoalPosition !== this.goalPosition) {
-      trace(`${this.name} ... updating goal position to ${this.goalPosition}\n`)
       await this.servo.setGoalPosition(this.goalPosition + this._offset)
       this._lastGoalPosition = this.goalPosition
     }
 
     const result = await this.servo.readPresentPosition()
     if (!result.success) {
-      trace(`${this.name} ... failed to update\n`)
       return
     }
     this.presentPosition = result.value - this._offset
     const position = this.presentPosition
-    const current = Math.min(Math.abs(this.goalPosition - position) * this.gain, this.saturation)
-    // trace(`servo ${this.name} ... (${position}, ${this.goalPosition}, ${this.gain}, ${this.saturation}, ${current})\n`)
+    const positionError = Math.abs(this.goalPosition - position)
+    const current = Math.min(Math.max(positionError * this.gain, this.minCurrent), this.saturation)
     await this.servo.setGoalCurrent(current)
   }
 }
@@ -74,7 +74,7 @@ export class DynamixelDriver {
   constructor(param: DynamixelDriverProps) {
     this._pan = new Dynamixel({ id: param.panId, baudrate: param.baud })
     this._tilt = new Dynamixel({ id: param.tiltId, baudrate: param.baud })
-    this._controls = [new PControl(this._pan, 0.15, 80, 'pan'), new PControl(this._tilt, 4, 800, 'tilt')]
+    this._controls = [new PControl(this._pan, 1.0, 80, 40, 'pan'), new PControl(this._tilt, 4, 800, 0, 'tilt')]
     this._torque = true
     this._initialized = false
     this._running = false
@@ -142,14 +142,12 @@ export class DynamixelDriver {
   async applyRotation(ori: Rotation): Promise<void> {
     const panAngle = (ori.y * 180) / Math.PI
     const tiltAngle = (ori.p * 180) / Math.PI
-    trace(`applying (${ori.y}, ${ori.p}) => (${panAngle}, ${tiltAngle})\n`)
     this._controls[0].goalPosition = Math.floor(((panAngle + 180) * 4096) / 360)
     this._controls[1].goalPosition = Math.floor(((Math.min(Math.max(tiltAngle, -30), 10) + 180) * 4096) / 360)
   }
 
   async getRotation(): Promise<Maybe<Rotation>> {
     const [p1, p2] = this._controls.map((c) => (c.presentPosition * 360) / 4096 - 180)
-    // trace(`got (${p1}, ${p2}) => (${(p1 * Math.PI) / 180}, ${(p2 * Math.PI) / 180})\n`)
     return {
       success: true,
       value: {
