@@ -3,6 +3,7 @@ import config from 'mc/config'
 import Timer from 'timer'
 
 import SingleWaitSlot from './internal/single-wait-slot'
+import { PayloadBuffer } from './payload-buffer'
 
 type Maybe<T> =
   | {
@@ -61,8 +62,9 @@ const RX_STATE = {
 type RxState = (typeof RX_STATE)[keyof typeof RX_STATE]
 
 class PacketHandler extends Serial {
-  #callbacks: Map<number, (bytes: number[]) => void>
+  #callbacks: Map<number, (buffer: Uint8Array, length: number) => void>
   #rxBuffer: Uint8Array
+  #payloadBuffer: PayloadBuffer
   #idx: number
   #state: RxState
   #count: number
@@ -96,16 +98,18 @@ class PacketHandler extends Serial {
             this.#count -= 1
             if (this.#count === 0) {
               // trace('received packet!\n')
-              const cs = checksum(rxBuf.slice(0, this.#idx - 1)) & 0xff
+              const cs = checksum(rxBuf, this.#idx - 1) & 0xff
               const id = rxBuf[2]
               const command = rxBuf[4] as Command
               if (command === COMMAND.READ || command === COMMAND.WRITE) {
-                // trace(`got echo.  ... ${rxBuf.slice(0, this.#idx)} ignoring\n`)
+                // trace(`got echo.  ... ${rxBuf.subarray(0, this.#idx)} ignoring\n`)
               } else if (cs === rxBuf[this.#idx - 1] && this.#callbacks.has(id)) {
                 // trace(`got response for ${id}. triggering callback \n`)
-                this.#callbacks.get(id)(Array.from(rxBuf.slice(5, this.#idx - 1)))
+                const payloadLength = this.#idx - 6
+                const payload = this.#payloadBuffer.copyFrom(rxBuf, payloadLength, 5)
+                this.#callbacks.get(id)(payload, payloadLength)
               } else {
-                trace(`unknown packet for ${id} ... ${rxBuf.slice(0, this.#idx)}. ignoring\n`)
+                trace(`unknown packet for ${id} ... ${rxBuf.subarray(0, this.#idx)}. ignoring\n`)
               }
               this.#idx = 0
               this.#state = RX_STATE.SEEK
@@ -124,15 +128,16 @@ class PacketHandler extends Serial {
       format: 'number',
       onReadable,
     })
-    this.#callbacks = new Map<number, () => void>()
+    this.#callbacks = new Map<number, (buffer: Uint8Array, length: number) => void>()
     this.#rxBuffer = new Uint8Array(64)
+    this.#payloadBuffer = new PayloadBuffer(32)
     this.#idx = 0
     this.#state = RX_STATE.SEEK
   }
   hasCallbackOf(id: number): boolean {
     return this.#callbacks.has(id)
   }
-  registerCallback(id: number, callback: (bytes: number[]) => void) {
+  registerCallback(id: number, callback: (buffer: Uint8Array, length: number) => void) {
     this.#callbacks.set(id, callback)
   }
   removeCallback(id: number) {
@@ -145,10 +150,10 @@ class PacketHandler extends Serial {
  * @param arr packet array except checksum
  * @returns checksum number
  */
-function checksum(arr: number[] | Uint8Array): number {
+function checksum(buffer: Uint8Array, length: number): number {
   let sum = 0
-  for (const n of arr.slice(2)) {
-    sum += n
+  for (let i = 2; i < length; i++) {
+    sum += buffer[i]
   }
   const cs = ~(sum & 0xff)
   // trace(`>>>checksum is ${new Uint8Array([cs])[0]}: ${arr}\n`)
@@ -162,18 +167,21 @@ type SCServoConstructorParam = {
 let packetHandler: PacketHandler = null
 class SCServo {
   #id: number
-  #onCommandRead: (values: number[]) => void
+  #onCommandRead: (buffer: Uint8Array, length: number) => void
   #txBuf: Uint8Array
-  #waitSlot: SingleWaitSlot<number[]>
+  #waitSlot: SingleWaitSlot<Uint8Array>
   #queueTail: Promise<void>
+  #responseBuffer: PayloadBuffer
   #offset: number
   constructor({ id }: SCServoConstructorParam) {
     this.#id = id
-    this.#waitSlot = new SingleWaitSlot<number[]>(Timer.set, Timer.clear)
+    this.#waitSlot = new SingleWaitSlot<Uint8Array>(Timer.set, Timer.clear)
     this.#queueTail = Promise.resolve()
     this.#offset = 0
-    this.#onCommandRead = (values) => {
-      this.#waitSlot.resolve(values)
+    this.#responseBuffer = new PayloadBuffer(32)
+    this.#onCommandRead = (values, length) => {
+      const payload = this.#responseBuffer.copyFrom(values, length)
+      this.#waitSlot.resolve(payload)
     }
     this.#txBuf = new Uint8Array(64)
     if (packetHandler == null) {
@@ -196,7 +204,7 @@ class SCServo {
     return this.#id
   }
 
-  async #dispatchCommand(command: Command, address: Address, ...values: number[]): Promise<number[] | undefined> {
+  async #dispatchCommand(command: Command, address: Address, ...values: number[]): Promise<Uint8Array | undefined> {
     this.#txBuf[0] = 0xff
     this.#txBuf[1] = 0xff
     this.#txBuf[2] = this.#id
@@ -208,9 +216,9 @@ class SCServo {
       this.#txBuf[idx] = v
       idx++
     }
-    this.#txBuf[idx] = checksum(this.#txBuf.slice(0, idx))
+    this.#txBuf[idx] = checksum(this.#txBuf, idx)
     idx++
-    // trace(`writing: ${this.#txBuf.slice(0, idx)}\n`)
+    // trace(`writing: ${this.#txBuf.subarray(0, idx)}\n`)
     for (let i = 0; i < idx; i++) {
       packetHandler.write(this.#txBuf[i])
     }
@@ -219,7 +227,7 @@ class SCServo {
     })
   }
 
-  async #sendCommand(command: Command, address: Address, ...values: number[]): Promise<number[] | undefined> {
+  async #sendCommand(command: Command, address: Address, ...values: number[]): Promise<Uint8Array | undefined> {
     const run = this.#queueTail.then(() => this.#dispatchCommand(command, address, ...values))
     this.#queueTail = run.then(
       () => undefined,
