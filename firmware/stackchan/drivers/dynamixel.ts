@@ -1,7 +1,7 @@
 import Serial from 'embedded:io/serial'
 import Timer from 'timer'
 
-import SingleWaitSlot from './internal/single-wait-slot'
+import SingleWaitSlot from 'single-wait-slot'
 import config from 'mc/config'
 
 import { PayloadBuffer } from './payload-buffer'
@@ -227,15 +227,12 @@ class Dynamixel {
   #txBuf: Uint8Array
   #waitSlot: SingleWaitSlot<Uint8Array>
   #queueTail: Promise<void>
-  #responseBuffer: PayloadBuffer
   constructor({ id, baudrate = 1_000_000 }: DynamixelConstructorParam) {
     this.#id = id
     this.#waitSlot = new SingleWaitSlot<Uint8Array>(Timer.set, Timer.clear)
     this.#queueTail = Promise.resolve()
-    this.#responseBuffer = new PayloadBuffer(32)
-    this.#onCommandRead = (values, length) => {
-      const payload = this.#responseBuffer.copyFrom(values, length)
-      this.#waitSlot.resolve(payload)
+    this.#onCommandRead = (values, _length) => {
+      this.#waitSlot.resolve(values)
     }
     this.#txBuf = new Uint8Array(64)
     if (packetHandler == null) {

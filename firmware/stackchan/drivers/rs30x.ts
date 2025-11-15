@@ -2,8 +2,8 @@ import Serial from 'embedded:io/serial'
 import config from 'mc/config'
 import Timer from 'timer'
 
-import SingleWaitSlot from './internal/single-wait-slot'
-import { PayloadBuffer } from './payload-buffer'
+import SingleWaitSlot from 'single-wait-slot'
+import { PayloadBuffer } from 'payload-buffer'
 
 // type aliases
 type TORQUE_OFF = 0
@@ -182,17 +182,14 @@ class RS30X {
   #txBuf: Uint8Array
   #waitSlot: SingleWaitSlot<Uint8Array>
   #queueTail: Promise<void>
-  #responseBuffer: PayloadBuffer
   #offset: number
   constructor({ id }: RS30XConstructorParam) {
     this.#id = id
     this.#waitSlot = new SingleWaitSlot<Uint8Array>(Timer.set, Timer.clear)
     this.#queueTail = Promise.resolve()
     this.#offset = 0
-    this.#responseBuffer = new PayloadBuffer(32)
-    this.#onCommandRead = (values, length) => {
-      const payload = this.#responseBuffer.copyFrom(values, length)
-      this.#waitSlot.resolve(payload)
+    this.#onCommandRead = (values, _length) => {
+      this.#waitSlot.resolve(values)
     }
     this.#txBuf = new Uint8Array(64)
     if (packetHandler == null) {
