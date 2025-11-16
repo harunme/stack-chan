@@ -385,7 +385,7 @@ export class Robot {
     this.#emotion = emotion
   }
 
-  setMouseOpen(value: number) {
+  setMouthOpen(value: number) {
     if (value !== undefined && (value < 0 || value > 1)) {
       throw new Error('value must be between 0 and 1')
     }

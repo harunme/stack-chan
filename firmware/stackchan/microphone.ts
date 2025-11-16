@@ -27,7 +27,7 @@ export default class Microphone {
   }
 
   stop() {
-    this.#audioIn?.close
+    this.#audioIn?.close()
     this.#audioIn = null
     this.recording = false
   }
