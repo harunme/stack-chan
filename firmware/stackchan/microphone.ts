@@ -2,7 +2,7 @@ import AudioIn from 'embedded:io/audio/in'
 
 export default class Microphone {
   recording: boolean
-  #audioIn?: AudioIn
+  #audioIn: AudioIn | null
   onReadable?: (this: AudioIn, byteLength: number, sampleCount?: number) => void
 
   constructor() {
