@@ -30,7 +30,7 @@ class PControl {
     this._lastGoalPosition = 0
   }
 
-  async init() {
+  async init(torqueEnabled: boolean) {
     const result = await this.servo.readPresentPosition()
     if (result.success && result.value > 4096) {
       this._offset = 4096
@@ -40,7 +40,7 @@ class PControl {
     this.goalPosition = 2048
     // Use CURRENT_BASED_POSITION mode for dynamic torque control
     await this.servo.setOperatingMode(OPERATING_MODE.CURRENT_BASED_POSITION)
-    await this.servo.setTorque(true)
+    await this.servo.setTorque(torqueEnabled)
   }
 
   async update() {
@@ -84,6 +84,7 @@ export class DynamixelDriver {
 
   async setTorque(torque: boolean): Promise<void> {
     this._torque = torque
+    await Promise.all(this._controls.map((c) => c.servo.setTorque(torque)))
   }
 
   onAttached(): void {
@@ -111,11 +112,14 @@ export class DynamixelDriver {
       if (!this._initialized) {
         this._initialized = true
         for (const c of this._controls) {
-          await c.init()
+          await c.init(this._torque)
         }
         await this._pan.setProfileAcceleration(20)
         await this._pan.setProfileVelocity(100)
         trace('servo initialized\n')
+      }
+      if (!this._torque) {
+        return
       }
       // TODO: use bulk write/read instruction for performance
       for (const c of this._controls) {

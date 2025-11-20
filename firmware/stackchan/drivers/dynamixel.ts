@@ -140,12 +140,16 @@ class PacketHandler extends Serial {
               } else if (command === INSTRUCTION.STATUS) {
                 // trace(`got response for ${id}. triggering callback ... ${rxBuf.subarray(0, this.#idx)} \n`)
                 const payloadLength = this.#idx - 8
-                const payload = this.#payloadBuffer.copyFrom(rxBuf, payloadLength, 7)
+                const payloadView = this.#payloadBuffer.copyFrom(rxBuf, payloadLength, 7)
+                const payload = new Uint8Array(payloadLength)
+                payload.set(payloadView.subarray(0, payloadLength))
                 this.#callbacks.get(id)?.(payload, payloadLength)
               } else {
                 // trace(`something wrong for ${id}. ${rxBuf.subarray(0, this.#idx)} \n`)
                 const payloadLength = this.#idx - 8
-                const payload = this.#payloadBuffer.copyFrom(rxBuf, payloadLength, 7)
+                const payloadView = this.#payloadBuffer.copyFrom(rxBuf, payloadLength, 7)
+                const payload = new Uint8Array(payloadLength)
+                payload.set(payloadView.subarray(0, payloadLength))
                 this.#callbacks.get(id)?.(payload, payloadLength)
               }
               this.#idx = 0
@@ -463,10 +467,14 @@ class Dynamixel {
    */
   async readModelNumber(): Promise<number> {
     const values = await this.#sendCommand(INSTRUCTION.READ, ADDRESS.MODEL_NUMBER, 2)
-    if (values == null || values.length < 2) {
+    if (values == null || values.length < 4) {
       throw new Error('failed to read model number')
     }
-    return el(values[0], values[1])
+    if (values[1] !== 0) {
+      throw new Error(`servo returned error code: ${values[1]} while reading model number`)
+    }
+    // payload layout: [instruction/status, status_code, low, high]
+    return el(values[3], values[2])
   }
 
   /**

@@ -132,7 +132,9 @@ class PacketHandler extends Serial {
               } else if (cs === rxBuf[this.#idx - 1] && this.#callbacks.has(id)) {
                 // trace(`got response for ${id}. triggering callback \n`)
                 const payloadLength = this.#idx - 8
-                const payload = this.#payloadBuffer.copyFrom(rxBuf, payloadLength, 7)
+                const payloadView = this.#payloadBuffer.copyFrom(rxBuf, payloadLength, 7)
+                const payload = new Uint8Array(payloadLength)
+                payload.set(payloadView.subarray(0, payloadLength))
                 this.#callbacks.get(id)?.(payload, payloadLength)
               } else {
                 trace(`unknown packet for ${id} ... ${rxBuf.subarray(0, this.#idx)}. ignoring\n`)
