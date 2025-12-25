@@ -11,7 +11,7 @@
     "./drivers/manifest_driver.json",
     "./ble/manifest_ble.json",
     "./dialogues/manifest_dialogue.json",
-    "./renderers/manifest_renderer.json",
+    "./renderers-piu/manifest_renderer_piu.json",
     "./services/manifest_service.json",
     "./speeches/manifest_speech.json",
     "./transcriptions/manifest_transcription.json",

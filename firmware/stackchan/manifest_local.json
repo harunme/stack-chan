@@ -7,7 +7,7 @@
       "port": 50021
     },
     "driver": {
-      "type": "scservo"
+      "type": "none"
     }
   }
 }
