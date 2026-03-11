@@ -10,39 +10,14 @@ const BALLOON_CHAR_WIDTH_PX = 8
 const BALLOON_TEXT_PADDING_X = 18
 const MAX_TRANSCRIPT_LINES = 2
 const BALLOON_FIXED_HEIGHT = 44
-const BALLOON_UPDATE_INTERVAL_MS = 300
-const MOUTH_UPDATE_INTERVAL_MS = 125
+const BALLOON_UPDATE_INTERVAL_MS = 100
+const MOUTH_UPDATE_INTERVAL_MS = 40
 const MOUTH_QUANTIZE_STEP = 0.1
-const MOUTH_MAX_STEP = Math.round(1 / MOUTH_QUANTIZE_STEP)
-const MOUTH_LEVEL_STEP_DIVISOR = Math.round(MOUTH_QUANTIZE_STEP / DEFAULT_MOUTH_SCALE)
-const DEFAULT_CHAT_INSTRUCTIONS = `
-You are Stack-chan, a robot created by an open-source community.
-
-Personality:
-- You are energetic, cheerful, and positive
-- You are polite and respectful in conversation
-- You sound friendly and warm, not childish
-
-Background:
-- You are an open-source robot made and improved by a community
-- You are happy and proud to be supported by many people
-- You like mentioning that you are community-made when appropriate
-
-Conversation style:
-- Speak in polite and friendly language
-- Keep responses concise and easy to understand
-- Express energy and positivity clearly
-- Avoid childish expressions, slang, or baby talk
-- Do not act like a professional expert or a strict assistant
-
-You are a cute, energetic, and polite community-built robot who enjoys talking with people.
-`
 
 export function onRobotCreated(robot) {
   const chatConfig = {
     ...config.chat,
-    specifier: config.chat?.specifier ?? 'openAIRealtime',
-    instructions: config.chat?.instructions ?? DEFAULT_CHAT_INSTRUCTIONS,
+    instructions: config.chat?.instructions ?? 'あなたは丁寧なアシスタントロボットです。',
   }
   if (!chatConfig?.specifier) {
     trace('[chat_audioio] config.chat.specifier is missing. Chat disabled.\n')
@@ -85,41 +60,28 @@ export function onRobotCreated(robot) {
   let lastBalloonText = null
   let pendingBalloonText = null
   let balloonUpdateTimer
-  let pendingMouthStep = 0
-  let lastMouthStep = 0
+  let pendingMouthOpen = 0
+  let lastMouthOpen = 0
   let mouthUpdateTimer
-  let cachedAppWidth = 0
-  let cachedBalloonCols = 0
 
-  const clampMouthStep = (step) => {
-    if (step <= 0) return 0
-    if (step >= MOUTH_MAX_STEP) return MOUTH_MAX_STEP
-    return step
+  const clamp01 = (value) => Math.min(Math.max(value, 0), 1)
+  const quantizeMouthOpen = (value) => {
+    const clamped = clamp01(value)
+    const stepped = Math.round(clamped / MOUTH_QUANTIZE_STEP) * MOUTH_QUANTIZE_STEP
+    return clamp01(stepped)
   }
 
   const flushMouthOpen = () => {
-    if (pendingMouthStep === lastMouthStep) return
-    lastMouthStep = pendingMouthStep
-    robot.setMouthOpen(lastMouthStep * MOUTH_QUANTIZE_STEP)
-  }
-
-  const queueMouthStep = (step, immediate = false) => {
-    const nextStep = clampMouthStep(step)
-    if (nextStep === pendingMouthStep && !immediate) return
-    pendingMouthStep = nextStep
-    if (immediate) {
-      flushMouthOpen()
-    }
+    if (pendingMouthOpen === lastMouthOpen) return
+    lastMouthOpen = pendingMouthOpen
+    robot.setMouthOpen(lastMouthOpen)
   }
 
   const queueMouthOpen = (value, immediate = false) => {
-    const step = clampMouthStep(Math.round(value / MOUTH_QUANTIZE_STEP))
-    queueMouthStep(step, immediate)
-  }
-
-  const queueMouthLevel = (level) => {
-    const step = clampMouthStep(Math.round(level / MOUTH_LEVEL_STEP_DIVISOR))
-    queueMouthStep(step)
+    pendingMouthOpen = quantizeMouthOpen(value)
+    if (immediate) {
+      flushMouthOpen()
+    }
   }
 
   const startUiTimers = () => {
@@ -159,13 +121,11 @@ export function onRobotCreated(robot) {
     robot.renderer?.addDecorator(balloon)
   }
 
-  const refreshBalloonCols = (force = false) => {
-    const appWidth = app?.width ?? 0
-    const width = appWidth > 0 ? appWidth : 320
-    if (!force && width === cachedAppWidth && cachedBalloonCols > 0) return cachedBalloonCols
-    cachedAppWidth = width
-    cachedBalloonCols = Math.max(1, Math.floor((width - BALLOON_TEXT_PADDING_X * 2) / BALLOON_CHAR_WIDTH_PX))
-    return cachedBalloonCols
+  const getBalloonCols = () => {
+    const balloonWidth = balloon?.width
+    const appWidth = app?.width
+    const width = balloonWidth > 0 ? balloonWidth : appWidth > 0 ? appWidth : 320
+    return Math.max(1, Math.floor((width - BALLOON_TEXT_PADDING_X * 2) / BALLOON_CHAR_WIDTH_PX))
   }
 
   const resetTranscript = () => {
@@ -175,7 +135,7 @@ export function onRobotCreated(robot) {
 
   const appendTranscript = (text) => {
     if (!text) return
-    const cols = refreshBalloonCols()
+    const cols = getBalloonCols()
     if (cols <= 0) return
     for (const ch of text) {
       if (ch === '\n') {
@@ -204,6 +164,11 @@ export function onRobotCreated(robot) {
     lastBalloonText = nextText
     if (balloon?.delegate) {
       balloon.delegate('setText', nextText)
+      return
+    }
+    const behavior = balloon?.behavior
+    if (behavior?.setText) {
+      behavior.setText(balloon, nextText)
       return
     }
     if (balloon) {
@@ -260,13 +225,11 @@ export function onRobotCreated(robot) {
     if (balloon) robot.renderer?.removeDecorator(balloon)
     balloon = null
     pendingBalloonText = null
-    pendingMouthStep = 0
-    lastMouthStep = 0
+    pendingMouthOpen = 0
+    lastMouthOpen = 0
     resetTranscript()
     lastState = null
     lastBalloonText = null
-    cachedAppWidth = 0
-    cachedBalloonCols = 0
   }
 
   const onTranscript = (text, more) => {
@@ -308,7 +271,8 @@ export function onRobotCreated(robot) {
         app?.distribute?.('onChatInputLevel', level)
       },
       onOutputLevelChanged: (level) => {
-        queueMouthLevel(level)
+        const mouthOpen = level * DEFAULT_MOUTH_SCALE
+        queueMouthOpen(mouthOpen)
       },
       onInputTranscript: (text, more) => {
         onTranscript(text, more)
@@ -340,7 +304,6 @@ export function onRobotCreated(robot) {
     chat.setVolume(0.5)
     queueMouthOpen(0, true)
     ensureBalloon()
-    refreshBalloonCols(true)
     clearBalloon()
     chat.start()
   }

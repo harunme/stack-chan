@@ -1,11 +1,10 @@
-import type { Container as PiuContainer, Content as PiuContent } from 'piu/MC'
+import { Skin, type Container as PiuContainer, type Content as PiuContent } from 'piu/MC'
 import { copyFaceContext, createFaceContext, defaultFaceContext, type FaceContext } from 'face-context'
-import { updateFaceSkinPalette, type FaceSkinPalette } from 'face-skin'
+import { createBlinkMotion } from 'motions/blink'
+import { createBreathMotion } from 'motions/breath'
 import type { FaceMotion } from 'motions/types'
 import { Eye } from 'parts/eye'
 import { Mouth } from 'parts/mouth'
-import { EyeSprite } from 'parts/image/eye-sprite'
-import { MouthSprite } from 'parts/image/mouth-sprite'
 import { DogEyebrow } from 'parts/dog/eyebrow'
 import { DogMouth } from 'parts/dog/mouth'
 import { DogNose } from 'parts/dog/nose'
@@ -37,29 +36,21 @@ type FaceBehaviorOptions = {
 export class FaceBehavior extends Behavior {
   #current: FaceContext
   #desired: FaceContext
-  #lastSent: FaceContext
   #motions: FaceMotion[]
   #baseCoordinates: { left: number; top: number } | null
   #paused: boolean
-  #skinPalette: FaceSkinPalette | null
-  #breathPixels: number
 
   constructor({ motions, intervalMs }: FaceBehaviorOptions) {
     super()
-    this.#motions =
-      motions ??
-      [
-        // createBlinkMotion({ openMin: 400, openMax: 5000, closeMin: 200, closeMax: 400 }),
-        // createBreathMotion({ duration: 6000 }),
-        // createSaccadeMotion({ updateMin: 300, updateMax: 2000, gain: 0.2 }),
-      ]
+    this.#motions = motions ?? [
+      createBlinkMotion({ openMin: 400, openMax: 5000, closeMin: 200, closeMax: 400 }),
+      createBreathMotion({ duration: 6000 }),
+      // createSaccadeMotion({ updateMin: 300, updateMax: 2000, gain: 0.2 }),
+    ]
     this.#current = createFaceContext()
     this.#desired = createFaceContext()
-    this.#lastSent = createFaceContext()
     this.#baseCoordinates = null
     this.#paused = false
-    this.#skinPalette = null
-    this.#breathPixels = 6
     this.intervalMs = intervalMs ?? 33
   }
 
@@ -68,13 +59,7 @@ export class FaceBehavior extends Behavior {
   onCreate(container: PiuContainer) {
     container.interval = this.intervalMs
     copyFaceContext(defaultFaceContext, this.#desired)
-    this.updateSkinPalette(container, defaultFaceContext)
-    if (this.#skinPalette) {
-      container.distribute('onFaceSkin', this.#skinPalette)
-      container.bubble('onFaceSkin', this.#skinPalette)
-    }
     container.distribute('onFaceContext', this.#current)
-    copyFaceContext(this.#current, this.#lastSent)
     // container.bubble('onFaceContext', this.#current)
   }
 
@@ -89,12 +74,7 @@ export class FaceBehavior extends Behavior {
     if (!this.#paused) {
       container.start?.()
     }
-    if (this.#skinPalette) {
-      container.distribute('onFaceSkin', this.#skinPalette)
-      container.bubble('onFaceSkin', this.#skinPalette)
-    }
     container.distribute('onFaceContext', this.#current)
-    copyFaceContext(this.#current, this.#lastSent)
     // container.bubble('onFaceContext', this.#current)
   }
 
@@ -119,22 +99,13 @@ export class FaceBehavior extends Behavior {
       }
     }
     const base = this.#baseCoordinates ?? { left: 0, top: 0 }
-    const nextY = base.top + this.#current.breath * this.#breathPixels
+    const nextY = base.top + this.#current.breath * 6
     container.coordinates = {
       ...(container.coordinates ?? {}),
       left: base.left,
       top: nextY,
     }
-    const faceChanged = !isSameFaceContext(this.#current, this.#lastSent)
-    if (faceChanged) {
-      const paletteChanged = this.updateSkinPalette(container, this.#current)
-      if (paletteChanged && this.#skinPalette) {
-        container.distribute('onFaceSkin', this.#skinPalette)
-        container.bubble('onFaceSkin', this.#skinPalette)
-      }
-      container.distribute('onFaceContext', this.#current)
-      copyFaceContext(this.#current, this.#lastSent)
-    }
+    container.distribute('onFaceContext', this.#current)
     // container.bubble('onFaceContext', this.#current)
   }
 
@@ -156,44 +127,9 @@ export class FaceBehavior extends Behavior {
     container.visible = true
     container.active = true
     container.start?.()
-    if (this.#skinPalette) {
-      container.distribute('onFaceSkin', this.#skinPalette)
-      container.bubble('onFaceSkin', this.#skinPalette)
-    }
     container.distribute('onFaceContext', this.#current)
-    copyFaceContext(this.#current, this.#lastSent)
     container.bubble('onFaceContext', this.#current)
   }
-
-  get breathPixels(): number {
-    return this.#breathPixels
-  }
-
-  private updateSkinPalette(container: PiuContainer, face: Readonly<FaceContext>): boolean {
-    const next = updateFaceSkinPalette(this.#skinPalette, face)
-    const changed = next !== this.#skinPalette
-    this.#skinPalette = next
-    if (this.#skinPalette) {
-      ;(container as PiuContainer & { faceSkin?: FaceSkinPalette }).faceSkin = this.#skinPalette
-    }
-    return changed
-  }
-}
-
-function isSameFaceContext(a: Readonly<FaceContext>, b: Readonly<FaceContext>): boolean {
-  return (
-    a.mouth.open === b.mouth.open &&
-    a.eyes.left.open === b.eyes.left.open &&
-    a.eyes.left.gazeX === b.eyes.left.gazeX &&
-    a.eyes.left.gazeY === b.eyes.left.gazeY &&
-    a.eyes.right.open === b.eyes.right.open &&
-    a.eyes.right.gazeX === b.eyes.right.gazeX &&
-    a.eyes.right.gazeY === b.eyes.right.gazeY &&
-    a.breath === b.breath &&
-    a.emotion === b.emotion &&
-    a.theme.primary === b.theme.primary &&
-    a.theme.secondary === b.theme.secondary
-  )
 }
 
 const DEFAULT_FACE_LEFT = 60
@@ -314,24 +250,6 @@ export const DogFace: FaceTemplateCtor = FaceBase.template(($: FaceBaseParams = 
         canvasWidth: width,
         canvasHeight: height,
       }),
-    ],
-  }
-})
-
-export const ImageFace: FaceTemplateCtor = FaceBase.template(($: FaceBaseParams = {}) => {
-  const left = $.left ?? DEFAULT_FACE_LEFT
-  const top = $.top ?? DEFAULT_FACE_TOP
-  const width = $.width ?? DEFAULT_FACE_WIDTH
-  const height = $.height ?? DEFAULT_FACE_HEIGHT
-  return {
-    left,
-    top,
-    width,
-    height,
-    contents: [
-      new EyeSprite({ cx: 30, cy: 33, side: 'left' }),
-      new EyeSprite({ cx: 170, cy: 36, side: 'right' }),
-      new MouthSprite({ cx: 100, cy: 88 }),
     ],
   }
 })
