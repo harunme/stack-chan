@@ -14,7 +14,6 @@ type CommonViewAnchors = {
 
 export type CommonViewParams = CommonViewAnchors & {
   main?: PiuContainer
-  appBar?: PiuContent
   drawerButtons?: DrawerButtonSpec[]
 }
 
@@ -145,19 +144,13 @@ export const CommonView: CommonViewTemplateCtor = Container.template(($: CommonV
   if (!$.MAIN) {
     $.MAIN = main
   }
-  const appBar =
-    $.APP_BAR ??
-    $.appBar ??
-    new Content($, {
-      anchor: 'APP_BAR',
-      left: 0,
-      right: 0,
-      top: 0,
-      height: 0,
-    })
-  if (!$.APP_BAR) {
-    $.APP_BAR = appBar as PiuContent
-  }
+  const appBar = new Content($, {
+    anchor: 'APP_BAR',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: 0,
+  })
   const overlay = new Container($, {
     anchor: 'OVERLAY',
     left: 0,

@@ -19,6 +19,7 @@ import {
 type FaceViewAnchors = {
   FACE?: PiuContainer
   EFFECTS?: PiuContainer
+  FACE_REGION?: DieRegion
 }
 
 type FaceViewBaseParams = CommonViewParams
@@ -35,6 +36,7 @@ export type FaceViewTemplateCtor = TemplateFunction<FaceViewParams, PiuContainer
 
 class FaceViewBehavior extends CommonViewBehavior {
   face: PiuContainer | null = null
+  faceRegion: DieRegion | null = null
   effects: PiuContainer | null = null
   effectsSet = new Set<PiuContent>()
   effectsByKey = new Map<string, PiuContent>()
@@ -48,13 +50,15 @@ class FaceViewBehavior extends CommonViewBehavior {
     if (!main) {
       throw new Error('[FaceView] missing MAIN container')
     }
-    if (!data.FACE || !data.EFFECTS) {
+    if (!data.FACE || !data.EFFECTS || !data.FACE_REGION) {
       const missing: string[] = []
       if (!data.FACE) missing.push('FACE')
+      if (!data.FACE_REGION) missing.push('FACE_REGION')
       if (!data.EFFECTS) missing.push('EFFECTS')
       throw new Error(`[FaceView] missing anchors: ${missing.join(', ')}`)
     }
     this.face = data.FACE
+    this.faceRegion = data.FACE_REGION
     this.effects = data.EFFECTS
     this.autoTheme = data.skin === undefined
   }
@@ -124,30 +128,11 @@ class FaceViewBehavior extends CommonViewBehavior {
   }
 
   setFace(face: PiuContainer): void {
-    if (!face || this.face === face) return
+    if (!face || !this.faceRegion || this.face === face) return
     const currentFace = this.face
-    const currentParent = currentFace
-      ? ((currentFace as PiuContent & { container?: PiuContainer }).container ?? null)
-      : null
-    const currentCoordinates = currentFace?.coordinates ? { ...currentFace.coordinates } : null
     this.face = face
-    if (currentCoordinates) {
-      face.coordinates = { ...(face.coordinates ?? {}), ...currentCoordinates }
-    }
-
-    if (currentFace && currentParent) {
-      currentParent.remove(currentFace)
-      if (currentParent === this.main && this.effects) {
-        currentParent.insert(face, this.effects)
-      } else {
-        currentParent.add(face)
-      }
-      return
-    }
-
-    if (!this.main) return
-    if (this.effects) this.main.insert(face, this.effects)
-    else this.main.add(face)
+    if (currentFace) this.faceRegion.remove(currentFace)
+    this.faceRegion.add(this.face)
   }
 }
 
@@ -171,7 +156,8 @@ export const FaceMainTemplate: TemplateFunction<FaceViewParams, PiuContainer> = 
       top: breathPad,
     }
 
-    const faceRegion = new Die(null, {
+    const faceRegion = new Die($, {
+      anchor: 'FACE_REGION',
       left: faceLeft - breathPad,
       top: faceTop - breathPad,
       width: faceWidth + breathPad * 2,
@@ -182,8 +168,11 @@ export const FaceMainTemplate: TemplateFunction<FaceViewParams, PiuContainer> = 
           die.set(0, 0, die.width, die.height).cut()
         }
       },
-    })
+    }) as DieRegion
 
+    if (!$.FACE_REGION) {
+      $.FACE_REGION = faceRegion
+    }
     faceRegion.add(face)
     const effects =
       $.effects ??

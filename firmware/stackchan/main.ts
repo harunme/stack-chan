@@ -13,7 +13,6 @@ import { TTS as ElevenLabsTTS } from 'tts-elevenlabs'
 import { TTS as OpenAITTS } from 'tts-openai'
 import defaultMod, { type StackchanMod } from 'default-mods/mod'
 import { Renderer as SimpleRenderer } from 'renderer-simple'
-import { Renderer as ImageFaceRenderer } from 'renderer-image'
 import { Renderer as DogFaceRenderer } from 'renderer-dog'
 import { Renderer as SmallFaceRenderer } from 'renderer-small'
 import { NetworkService } from 'network-service'
@@ -59,7 +58,6 @@ function createRobot() {
   const renderers = new Map<string, new (param: unknown) => Renderer>([
     ['dog', DogFaceRenderer],
     ['simple', SimpleRenderer],
-    ['image', ImageFaceRenderer],
     ['small-face', SmallFaceRenderer],
   ])
 

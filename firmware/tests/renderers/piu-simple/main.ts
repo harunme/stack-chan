@@ -1,7 +1,7 @@
 import { AppController } from 'app-controller'
-import { DogFace, ImageFace, SimpleFace } from 'behaviors/face'
+import { DogFace, SimpleFace } from 'behaviors/face'
 import { Emoticon } from 'effects/emoticon'
-import { MultiRowBalloon } from 'effects/multirow-balloon'
+import { SpeechBalloon } from 'effects/speech-balloon'
 import { Emotion, copyFaceContext, createFaceContext, defaultFaceContext, type FaceContext } from 'face-context'
 import { createBlinkMotion } from 'motions/blink'
 import { createBreathMotion } from 'motions/breath'
@@ -9,7 +9,7 @@ import { createSaccadeMotion } from 'motions/saccade'
 import type { Content as PiuContent } from 'piu/MC'
 import Timer from 'timer'
 
-let faceMode: 'simple' | 'dog' | 'image' = 'simple'
+let faceMode: 'simple' | 'dog' = 'simple'
 
 const application = new Application(
   {
@@ -38,7 +38,7 @@ const motions = [
 ]
 
 let emoticonDecorator: PiuContent | null = null
-const speechBalloon = new MultiRowBalloon({ text: 'Hello from Stack-chan', name: 'speech' })
+const speechBalloon = new SpeechBalloon({ text: 'Hello from Stack-chan', name: 'speech' })
 let speechVisible = false
 
 const EMOTIONS = [Emotion.HAPPY, Emotion.ANGRY, Emotion.SAD, Emotion.HOT, Emotion.SLEEPY, Emotion.NEUTRAL]
@@ -79,17 +79,13 @@ const behavior = controller as {
   cycleEmotion?: () => void
   toggleSpeech?: () => void
 }
-function setFaceMode(nextMode: typeof faceMode) {
-  faceMode = nextMode
-  const nextFace = faceMode === 'dog' ? new DogFace({}) : faceMode === 'image' ? new ImageFace({}) : new SimpleFace({})
-  controller.setFace(nextFace)
-  controller.application.distribute?.('onFaceMode', faceMode)
-  controller.setDrawerButtonState('toggleFace', faceMode !== 'simple')
-}
 behavior.toggleFace = () => {
   trace('[AppController] setFace handler\n')
-  const nextMode = faceMode === 'simple' ? 'dog' : faceMode === 'dog' ? 'image' : 'simple'
-  setFaceMode(nextMode)
+  faceMode = faceMode === 'dog' ? 'simple' : 'dog'
+  const nextFace = faceMode === 'dog' ? new DogFace({}) : new SimpleFace({})
+  controller.setFace(nextFace)
+  controller.application.distribute?.('onFaceMode', faceMode)
+  controller.setDrawerButtonState('toggleFace', faceMode === 'dog')
 }
 behavior.toggleMouth = () => {
   trace('[AppController] toggleMouth handler\n')
@@ -116,7 +112,14 @@ behavior.toggleSpeech = () => {
 let tick = -1
 Timer.repeat(() => {
   tick += 32
-  if (tick >= 32 * 300) tick = -1
+  if (tick >= 32 * 300) {
+    tick = -1
+    // change emotion every 9 seconds
+    const currentIndex = EMOTIONS.indexOf(desired.emotion)
+    const nextIndex = (currentIndex + 1) % EMOTIONS.length
+    desired.emotion = EMOTIONS[nextIndex]
+    applyDecoratorForEmotion(desired.emotion)
+  }
   const current = createFaceContext()
   copyFaceContext(desired, current)
   for (const motion of motions) motion(32, current)

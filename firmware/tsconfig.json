@@ -42,9 +42,6 @@
       "drawer": [
         "./stackchan/renderers-piu/drawer"
       ],
-      "mocks/*": [
-        "./tests/chats/mocks/*"
-      ],
       "*": [
         "./node_modules/@moddable/typings/*",
         "./node_modules/@moddable/typings/ble/*",
@@ -54,9 +51,7 @@
         "./stackchan/default-mods/*",
         "./stackchan/dialogues/*",
         "./stackchan/drivers/*",
-        "./stackchan/led/*",
         "./stackchan/renderers-piu/*",
-        "./stackchan/led/*",
         "./stackchan/renderers/*",
         "./stackchan/services/*",
         "./stackchan/speeches/*",
