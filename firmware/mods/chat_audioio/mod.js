@@ -17,7 +17,7 @@ const MOUTH_QUANTIZE_STEP = 0.1
 export function onRobotCreated(robot) {
   const chatConfig = {
     ...config.chat,
-    instructions: 'あなたは丁寧なアシスタントロボットです。',
+    instructions: config.chat?.instructions ?? 'あなたは丁寧なアシスタントロボットです。',
   }
   if (!chatConfig?.specifier) {
     trace('[chat_audioio] config.chat.specifier is missing. Chat disabled.\n')
