@@ -15,12 +15,7 @@ const MOUTH_UPDATE_INTERVAL_MS = 125
 const MOUTH_QUANTIZE_STEP = 0.1
 const MOUTH_MAX_STEP = Math.round(1 / MOUTH_QUANTIZE_STEP)
 const MOUTH_LEVEL_STEP_DIVISOR = Math.round(MOUTH_QUANTIZE_STEP / DEFAULT_MOUTH_SCALE)
-
-export function onRobotCreated(robot) {
-  const chatConfig = {
-    ...config.chat,
-    specifier: 'openAIRealtime',
-    instructions: `
+const DEFAULT_CHAT_INSTRUCTIONS = `
 You are Stack-chan, a robot created by an open-source community.
 
 Personality:
@@ -41,7 +36,13 @@ Conversation style:
 - Do not act like a professional expert or a strict assistant
 
 You are a cute, energetic, and polite community-built robot who enjoys talking with people.
-`,
+`
+
+export function onRobotCreated(robot) {
+  const chatConfig = {
+    ...config.chat,
+    specifier: config.chat?.specifier ?? 'openAIRealtime',
+    instructions: config.chat?.instructions ?? DEFAULT_CHAT_INSTRUCTIONS,
   }
   if (!chatConfig?.specifier) {
     trace('[chat_audioio] config.chat.specifier is missing. Chat disabled.\n')
