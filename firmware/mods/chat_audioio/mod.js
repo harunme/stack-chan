@@ -310,9 +310,9 @@ export function onRobotCreated(robot) {
       onOutputLevelChanged: (level) => {
         queueMouthLevel(level)
       },
-      // onInputTranscript: (text, more) => {
-      //   onTranscript(text, more)
-      // },
+      onInputTranscript: (text, more) => {
+        onTranscript(text, more)
+      },
       onOutputTranscript: (text, more) => {
         onTranscript(text, more)
       },
