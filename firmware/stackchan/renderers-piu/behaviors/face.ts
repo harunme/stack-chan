@@ -38,6 +38,7 @@ export class FaceBehavior extends Behavior {
   #current: FaceContext
   #desired: FaceContext
   #lastSent: FaceContext
+  #lastChildCount: number
   #motions: FaceMotion[]
   #baseCoordinates: { left: number; top: number } | null
   #paused: boolean
@@ -56,6 +57,7 @@ export class FaceBehavior extends Behavior {
     this.#current = createFaceContext()
     this.#desired = createFaceContext()
     this.#lastSent = createFaceContext()
+    this.#lastChildCount = 0
     this.#baseCoordinates = null
     this.#paused = false
     this.#skinPalette = null
@@ -75,6 +77,7 @@ export class FaceBehavior extends Behavior {
     }
     container.distribute('onFaceContext', this.#current)
     copyFaceContext(this.#current, this.#lastSent)
+    this.#lastChildCount = this.getChildCount(container)
     // container.bubble('onFaceContext', this.#current)
   }
 
@@ -95,6 +98,7 @@ export class FaceBehavior extends Behavior {
     }
     container.distribute('onFaceContext', this.#current)
     copyFaceContext(this.#current, this.#lastSent)
+    this.#lastChildCount = this.getChildCount(container)
     // container.bubble('onFaceContext', this.#current)
   }
 
@@ -125,10 +129,15 @@ export class FaceBehavior extends Behavior {
       left: base.left,
       top: nextY,
     }
+    const nextChildCount = this.getChildCount(container)
+    const attachmentsChanged = nextChildCount !== this.#lastChildCount
+    if (attachmentsChanged) {
+      this.#lastChildCount = nextChildCount
+    }
     const faceChanged = !isSameFaceContext(this.#current, this.#lastSent)
-    if (faceChanged) {
+    if (faceChanged || attachmentsChanged) {
       const paletteChanged = this.updateSkinPalette(container, this.#current)
-      if (paletteChanged && this.#skinPalette) {
+      if ((paletteChanged || attachmentsChanged) && this.#skinPalette) {
         container.distribute('onFaceSkin', this.#skinPalette)
         container.bubble('onFaceSkin', this.#skinPalette)
       }
@@ -162,6 +171,7 @@ export class FaceBehavior extends Behavior {
     }
     container.distribute('onFaceContext', this.#current)
     copyFaceContext(this.#current, this.#lastSent)
+    this.#lastChildCount = this.getChildCount(container)
     container.bubble('onFaceContext', this.#current)
   }
 
@@ -177,6 +187,10 @@ export class FaceBehavior extends Behavior {
       ;(container as PiuContainer & { faceSkin?: FaceSkinPalette }).faceSkin = this.#skinPalette
     }
     return changed
+  }
+
+  private getChildCount(container: PiuContainer): number {
+    return (container as PiuContainer & { length?: number }).length ?? 0
   }
 }
 
