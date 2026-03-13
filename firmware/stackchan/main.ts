@@ -20,6 +20,7 @@ import Microphone from 'microphone'
 import Tone from 'tone'
 import { asyncWait } from 'stackchan-util'
 import loadPreferences from 'loadPreference'
+import Led from 'led'
 
 // wrapper button class for simulator
 class SimButton {
@@ -97,6 +98,16 @@ function createRobot() {
 
   // TODO(@meganetaaan): screen.touch does not exist under Commodetto context. Is this check necessary?
   interface GlobalEnvironment {
+    config?: {
+      led?: Record<
+        string,
+        {
+          pin: number
+          length?: number
+          order?: string
+        }
+      >
+    }
     screen?: {
       touch?: unknown
     }
@@ -112,6 +123,15 @@ function createRobot() {
   const touch = undefined
   const microphone = Modules.has('embedded:io/audio/in') ? new Microphone() : undefined
   const tone = new Tone({ volume: ttsPrefs.volume })
+
+  const configLed = _globalEnv.config?.led ?? {}
+  const led = Object.fromEntries(
+    Object.entries(configLed).map(([key, config]) => [
+      key,
+      new Led(config as { pin: number; length?: number; order?: string }),
+    ]),
+  )
+
   return new Robot({
     driver,
     renderer,
@@ -120,6 +140,7 @@ function createRobot() {
     touch,
     tone,
     microphone,
+    led,
   })
 }
 
