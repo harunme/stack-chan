@@ -1,15 +1,15 @@
-import { Skin, type Container as PiuContainer, type Content as PiuContent } from 'piu/MC'
 import { copyFaceContext, createFaceContext, defaultFaceContext, type FaceContext } from 'face-context'
 import { createBlinkMotion } from 'motions/blink'
 import { createBreathMotion } from 'motions/breath'
 import type { FaceMotion } from 'motions/types'
-import { Eye } from 'parts/eye'
-import { Mouth } from 'parts/mouth'
-import { EyeSprite } from 'parts/image/eye-sprite'
-import { MouthSprite } from 'parts/image/mouth-sprite'
 import { DogEyebrow } from 'parts/dog/eyebrow'
 import { DogMouth } from 'parts/dog/mouth'
 import { DogNose } from 'parts/dog/nose'
+import { Eye } from 'parts/eye'
+import { EyeSprite } from 'parts/image/eye-sprite'
+import { MouthSprite } from 'parts/image/mouth-sprite'
+import { Mouth } from 'parts/mouth'
+import type { Container as PiuContainer, Content as PiuContent } from 'piu/MC'
 
 type TemplateCtor<TData> = {
   new (behaviorData?: TData, dictionary?: Record<string, unknown>): PiuContainer
@@ -41,6 +41,7 @@ export class FaceBehavior extends Behavior {
   #motions: FaceMotion[]
   #baseCoordinates: { left: number; top: number } | null
   #paused: boolean
+  breathPixels: number
 
   constructor({ motions, intervalMs }: FaceBehaviorOptions) {
     super()
@@ -53,6 +54,7 @@ export class FaceBehavior extends Behavior {
     this.#desired = createFaceContext()
     this.#baseCoordinates = null
     this.#paused = false
+    this.breathPixels = 6
     this.intervalMs = intervalMs ?? 33
   }
 
@@ -101,7 +103,7 @@ export class FaceBehavior extends Behavior {
       }
     }
     const base = this.#baseCoordinates ?? { left: 0, top: 0 }
-    const nextY = base.top + this.#current.breath * 6
+    const nextY = base.top + this.#current.breath * this.breathPixels
     container.coordinates = {
       ...(container.coordinates ?? {}),
       left: base.left,
@@ -113,6 +115,17 @@ export class FaceBehavior extends Behavior {
 
   onTouchEnded(container: PiuContainer) {
     container.bubble('onFaceTouch')
+  }
+
+  getBaseCoordinates(container: PiuContainer): { left: number; top: number } {
+    if (this.#baseCoordinates === null) {
+      const coordinates = container.coordinates
+      this.#baseCoordinates = {
+        left: coordinates?.left ?? 0,
+        top: coordinates?.top ?? 0,
+      }
+    }
+    return { ...this.#baseCoordinates }
   }
 
   pause(container: PiuContainer) {
