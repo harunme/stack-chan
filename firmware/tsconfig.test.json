@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "dist-tests",
     "allowJs": false,
+    "allowImportingTsExtensions": false,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
@@ -10,6 +11,8 @@
   },
   "include": [
     "stackchan/drivers/payload-buffer.ts",
+    "stackchan/drivers/internal/single-wait-slot.ts",
+    "stackchan/drivers/__tests__/**/*.ts",
     "tests/unit/**/*.ts"
   ],
   "exclude": []
