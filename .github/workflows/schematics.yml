@@ -5,15 +5,17 @@ on:
     branches:
       - dev/v1.0
     paths:
-      - '**.kicad_sch'
-      - '**.kicad_pcb'
+      - '**/*.kicad_sch'
+      - '**/*.kicad_pcb'
+      - 'schematics/**/*.kibot.yaml'
       - '.github/workflows/schematics.yml'
   pull_request:
     branches:
       - dev/v1.0
     paths:
-      - '**.kicad_sch'
-      - '**.kicad_pcb'
+      - '**/*.kicad_sch'
+      - '**/*.kicad_pcb'
+      - 'schematics/**/*.kibot.yaml'
       - '.github/workflows/schematics.yml'
 
 permissions:
@@ -44,6 +46,9 @@ jobs:
     needs: build-schematics
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev/v1.0'
     runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-deploy
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
@@ -58,8 +63,8 @@ jobs:
           path: ./schematics-files
       - name: Update schematics files
         run: |
+          rm -rf ./web/schematics
           mkdir -p ./web/schematics
-          rm -rf ./web/schematics/*
           cp -R ./schematics-files/. ./web/schematics/
       - name: Commit schematics update
         run: |

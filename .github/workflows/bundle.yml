@@ -43,6 +43,9 @@ jobs:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev/v1.0'
     runs-on: ubuntu-latest
+    concurrency:
+      group: gh-pages-deploy
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
@@ -57,8 +60,8 @@ jobs:
           path: ./firmware-bundle
       - name: Update bundle files
         run: |
+          rm -rf ./web/flash/tech.moddable.stackchan
           mkdir -p ./web/flash/tech.moddable.stackchan
-          rm -rf ./web/flash/tech.moddable.stackchan/*
           cp -R ./firmware-bundle/. ./web/flash/tech.moddable.stackchan/
       - name: Commit bundle update
         run: |
