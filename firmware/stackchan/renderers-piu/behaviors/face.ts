@@ -1,15 +1,16 @@
+import { type Container as PiuContainer, type Content as PiuContent } from 'piu/MC'
 import { copyFaceContext, createFaceContext, defaultFaceContext, type FaceContext } from 'face-context'
+import { updateFaceSkinPalette, type FaceSkinPalette } from 'face-skin'
 import { createBlinkMotion } from 'motions/blink'
 import { createBreathMotion } from 'motions/breath'
 import type { FaceMotion } from 'motions/types'
+import { EyeSprite } from 'parts/image/eye-sprite'
+import { MouthSprite } from 'parts/image/mouth-sprite'
 import { DogEyebrow } from 'parts/dog/eyebrow'
 import { DogMouth } from 'parts/dog/mouth'
 import { DogNose } from 'parts/dog/nose'
 import { Eye } from 'parts/eye'
-import { EyeSprite } from 'parts/image/eye-sprite'
-import { MouthSprite } from 'parts/image/mouth-sprite'
 import { Mouth } from 'parts/mouth'
-import type { Container as PiuContainer, Content as PiuContent } from 'piu/MC'
 
 type TemplateCtor<TData> = {
   new (behaviorData?: TData, dictionary?: Record<string, unknown>): PiuContainer
@@ -41,7 +42,8 @@ export class FaceBehavior extends Behavior {
   #motions: FaceMotion[]
   #baseCoordinates: { left: number; top: number } | null
   #paused: boolean
-  breathPixels: number
+  #skinPalette: FaceSkinPalette | null
+  #breathPixels: number
 
   constructor({ motions, intervalMs }: FaceBehaviorOptions) {
     super()
@@ -54,7 +56,8 @@ export class FaceBehavior extends Behavior {
     this.#desired = createFaceContext()
     this.#baseCoordinates = null
     this.#paused = false
-    this.breathPixels = 6
+    this.#skinPalette = null
+    this.#breathPixels = 6
     this.intervalMs = intervalMs ?? 33
   }
 
@@ -63,6 +66,11 @@ export class FaceBehavior extends Behavior {
   onCreate(container: PiuContainer) {
     container.interval = this.intervalMs
     copyFaceContext(defaultFaceContext, this.#desired)
+    this.updateSkinPalette(container, defaultFaceContext)
+    if (this.#skinPalette) {
+      container.distribute('onFaceSkin', this.#skinPalette)
+      container.bubble('onFaceSkin', this.#skinPalette)
+    }
     container.distribute('onFaceContext', this.#current)
     // container.bubble('onFaceContext', this.#current)
   }
@@ -77,6 +85,10 @@ export class FaceBehavior extends Behavior {
     }
     if (!this.#paused) {
       container.start?.()
+    }
+    if (this.#skinPalette) {
+      container.distribute('onFaceSkin', this.#skinPalette)
+      container.bubble('onFaceSkin', this.#skinPalette)
     }
     container.distribute('onFaceContext', this.#current)
     // container.bubble('onFaceContext', this.#current)
@@ -103,11 +115,16 @@ export class FaceBehavior extends Behavior {
       }
     }
     const base = this.#baseCoordinates ?? { left: 0, top: 0 }
-    const nextY = base.top + this.#current.breath * this.breathPixels
+    const nextY = base.top + this.#current.breath * this.#breathPixels
     container.coordinates = {
       ...(container.coordinates ?? {}),
       left: base.left,
       top: nextY,
+    }
+    const paletteChanged = this.updateSkinPalette(container, this.#current)
+    if (paletteChanged && this.#skinPalette) {
+      container.distribute('onFaceSkin', this.#skinPalette)
+      container.bubble('onFaceSkin', this.#skinPalette)
     }
     container.distribute('onFaceContext', this.#current)
     // container.bubble('onFaceContext', this.#current)
@@ -142,8 +159,26 @@ export class FaceBehavior extends Behavior {
     container.visible = true
     container.active = true
     container.start?.()
+    if (this.#skinPalette) {
+      container.distribute('onFaceSkin', this.#skinPalette)
+      container.bubble('onFaceSkin', this.#skinPalette)
+    }
     container.distribute('onFaceContext', this.#current)
     container.bubble('onFaceContext', this.#current)
+  }
+
+  get breathPixels(): number {
+    return this.#breathPixels
+  }
+
+  private updateSkinPalette(container: PiuContainer, face: Readonly<FaceContext>): boolean {
+    const next = updateFaceSkinPalette(this.#skinPalette, face)
+    const changed = next !== this.#skinPalette
+    this.#skinPalette = next
+    if (this.#skinPalette) {
+      ;(container as PiuContainer & { faceSkin?: FaceSkinPalette }).faceSkin = this.#skinPalette
+    }
+    return changed
   }
 }
 
