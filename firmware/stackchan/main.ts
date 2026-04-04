@@ -13,8 +13,9 @@ import { TTS as VoiceVoxWebTTS } from 'tts-voicevox-web'
 import { TTS as ElevenLabsTTS } from 'tts-elevenlabs'
 import { TTS as OpenAITTS } from 'tts-openai'
 import defaultMod, { type StackchanMod } from 'default-mods/mod'
-import { Renderer as SimpleRenderer, SmallFaceRenderer } from 'simple-face'
-import { Renderer as DogFaceRenderer } from 'dog-face'
+import { Renderer as SimpleRenderer } from 'renderer-simple'
+import { Renderer as DogFaceRenderer } from 'renderer-dog'
+import { Renderer as SmallFaceRenderer } from 'renderer-small'
 import { NetworkService } from 'network-service'
 import Touch from 'touch'
 import Microphone from 'microphone'
@@ -97,24 +98,11 @@ function createRobot() {
   const tts = new TTS(ttsPrefs)
   const button = globalThis.button
 
-  // TODO(@meganetaaan): screen.touch does not exist under Commodetto context. Is this check necessary?
-  interface GlobalEnvironment {
-    screen?: {
-      touch?: unknown
-    }
-    device?: {
-      sensor?: {
-        Touch?: unknown
-      }
-    }
-  }
-  const globalEnv = globalThis as unknown as GlobalEnvironment
-  const TouchConstructor = config.Touch || globalEnv.device?.sensor?.Touch
-  const touch = TouchConstructor ? new Touch(TouchConstructor) : undefined
+  const touch = config.Touch ? new Touch(config.Touch) : undefined
   const microphone = Modules.has('embedded:io/audio/in') ? new Microphone() : undefined
   const tone = new Tone({ volume: ttsPrefs.volume })
 
-  const configLed = config.led || {}
+  const configLed = config.led ?? {}
   const led = Object.fromEntries(
     Object.entries(configLed).map(([key, config]) => [
       key,
