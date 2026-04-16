@@ -1,5 +1,6 @@
 import { Outline } from 'commodetto/outline'
 import type { Container as PiuContainer, Content as PiuContent, Style as PiuStyle, Text as PiuText } from 'piu/MC'
+import type { Shape } from 'piu/shape'
 import { defaultFaceContext, type FaceContext } from 'face-context'
 
 const defaultOptions = {

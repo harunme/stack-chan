@@ -1,6 +1,7 @@
 import type { Container as PiuContainer, Content as PiuContent, Skin as PiuSkin } from 'piu/MC'
 import { Outline } from 'commodetto/outline'
 import { defaultFaceContext, type FaceContext } from 'face-context'
+import type { Shape } from 'piu/shape'
 
 export type EmoticonKey = 'heart' | 'angry' | 'sweat' | 'tear' | 'sleepy'
 
