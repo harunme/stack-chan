@@ -10,11 +10,15 @@ import { Eye } from 'parts/eye'
 import { EyeSprite } from 'parts/image/eye-sprite'
 import { MouthSprite } from 'parts/image/mouth-sprite'
 import { Mouth } from 'parts/mouth'
-import type { Container as PiuContainer, Content as PiuContent } from 'piu/MC'
+import type {
+  Container as PiuContainer,
+  ContainerDictionary as PiuContainerDictionary,
+  Content as PiuContent,
+} from 'piu/MC'
 
 type TemplateCtor<TData> = {
-  new (behaviorData?: TData, dictionary?: Record<string, unknown>): PiuContainer
-  template: (factory: unknown) => TemplateCtor<TData>
+  new (behaviorData?: TData, dictionary?: PiuContainerDictionary): PiuContainer
+  template<TNextData>(factory: (arg: TNextData) => PiuContainerDictionary): TemplateCtor<TNextData>
 }
 
 export type FaceBaseParams = {
@@ -29,7 +33,7 @@ export type FaceBaseParams = {
   height?: number
 }
 
-export type FaceTemplateCtor = TemplateCtor<unknown>
+export type FaceTemplateCtor = TemplateCtor<FaceBaseParams>
 
 type FaceBehaviorOptions = {
   motions?: FaceMotion[]
@@ -243,7 +247,7 @@ export const FaceBase: FaceTemplateCtor = Container.template(($: FaceBaseParams,
       }
     },
   }
-})
+}) as unknown as FaceTemplateCtor
 
 export const SimpleFace: FaceTemplateCtor = FaceBase.template(($: FaceBaseParams = {}) => {
   const left = $.left ?? DEFAULT_FACE_LEFT

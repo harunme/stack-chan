@@ -67,7 +67,7 @@ export const SpeechBalloon = Container.template((opts: BalloonOptions = {}) => {
   const fixedHeight = opts.height
 
   const style: PiuStyle = new Style({ font: o.font, color: '#000', horizontal: 'left' })
-  const lineHeight = Math.max(1, style.measure('Mg').height)
+  const lineHeight = Math.max(1, style.measure('Mg').height ?? 0)
   let background: WithSkin | null = null
   let bodyText: PiuText | null = null
   let currentText = o.text ?? ''
@@ -101,7 +101,7 @@ export const SpeechBalloon = Container.template((opts: BalloonOptions = {}) => {
         continue
       }
       const candidate = line + ch
-      if (style.measure(candidate).width <= widthLimit) {
+      if ((style.measure(candidate).width ?? 0) <= widthLimit) {
         line = candidate
         continue
       }

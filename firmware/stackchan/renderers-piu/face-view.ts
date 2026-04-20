@@ -258,18 +258,18 @@ export const FaceMainTemplate: TemplateFunction<FaceViewParams, PiuContainer> = 
       contents: [faceRegion, effects],
     }
   },
-)
+) as unknown as TemplateFunction<FaceViewParams, PiuContainer>
 
 const CommonViewTemplate: CommonViewTemplateCtor = CommonView
 export const FaceView: FaceViewTemplateCtor = CommonViewTemplate.template
-  ? CommonViewTemplate.template(($: FaceViewParams) => {
+  ? (CommonViewTemplate.template(($: FaceViewParams) => {
       if (!$.main && !$.MAIN) {
         if (!$.face) throw new Error('[FaceView] face is required when main is not provided')
         const main = new FaceMainTemplate($, { anchor: 'MAIN' })
         $.main = main
       }
       return { Behavior: FaceViewBehavior }
-    })
-  : CommonViewTemplate
+    }) as unknown as FaceViewTemplateCtor)
+  : (CommonViewTemplate as FaceViewTemplateCtor)
 
 export type { FaceViewBehavior }
