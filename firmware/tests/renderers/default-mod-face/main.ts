@@ -39,6 +39,9 @@ const robot = {
   setEmotion: () => {},
 }
 
+if (!onRobotCreated) {
+  throw new Error('onRobotCreated is not defined')
+}
 onRobotCreated(robot as never)
 
 equal(buttons[0]?.key, 'toggleFace', 'toggleFace button should be registered')
