@@ -1,3 +1,4 @@
+import { defaultFaceContext, type FaceContext } from 'face-context'
 import type {
   Container as PiuContainer,
   Content as PiuContent,
@@ -5,7 +6,6 @@ import type {
   Text as PiuText,
   Texture as PiuTexture,
 } from 'piu/MC'
-import { defaultFaceContext, type FaceContext } from 'face-context'
 
 let bubbleTexture: PiuTexture | null = null
 
@@ -73,6 +73,7 @@ export const SpeechBalloon = Container.template((opts: BalloonOptions = {}) => {
   let currentText = o.text ?? ''
   let currentPrimary: string | null = null
   let currentSecondary: string | null = null
+  let currentFace: Readonly<FaceContext> = defaultFaceContext
   let layoutWidth = 0
 
   const left = opts.left ?? defaultOptions.left
@@ -129,6 +130,8 @@ export const SpeechBalloon = Container.template((opts: BalloonOptions = {}) => {
           background = null
           bodyText = null
         }
+        currentPrimary = null
+        currentSecondary = null
         layoutWidth = w
         background = new Content(null, { left: 0, right: 0, top: 0, bottom: 0 }) as WithSkin
         bodyText = new Text(null, {
@@ -140,11 +143,12 @@ export const SpeechBalloon = Container.template((opts: BalloonOptions = {}) => {
         })
         self.add(background)
         self.add(bodyText)
-        this.updatePalette(defaultFaceContext)
+        this.updatePalette(currentFace)
         this.updateText(self, currentText)
       }
 
       updatePalette(face: FaceContext) {
+        currentFace = face
         if (!background || !bodyText) return
         if (!bubbleTexture) bubbleTexture = new Texture('bubble.png')
         const primary = face.theme.primary
@@ -190,7 +194,7 @@ export const SpeechBalloon = Container.template((opts: BalloonOptions = {}) => {
 
       onDisplaying(content: PiuContainer) {
         this.ensureParts(content)
-        this.updatePalette(defaultFaceContext)
+        this.updatePalette(currentFace)
       }
 
       onFaceContext(content: PiuContainer, face: FaceContext) {
