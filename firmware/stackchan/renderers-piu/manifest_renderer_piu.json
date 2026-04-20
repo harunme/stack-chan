@@ -76,5 +76,12 @@
     "piuRegion",
     "piuTexture",
     "piuView"
-  ]
+  ],
+  "typescript": {
+    "tsconfig": {
+      "compilerOptions": {
+        "noImplicitAny": false
+      }
+    }
+  }
 }
