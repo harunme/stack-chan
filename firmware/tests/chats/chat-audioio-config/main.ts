@@ -12,6 +12,7 @@ type StubRobot = {
   renderer: {
     setFace: () => void
     application: {
+      addDrawerButton: () => void
       distribute: (_event: string, _payload: unknown) => void
     }
   }
@@ -25,20 +26,20 @@ function createStubRobot() {
     setFace: 0,
     addDrawerButton: 0,
   }
+  const application = {
+    addDrawerButton: () => {
+      calls.addDrawerButton += 1
+    },
+    distribute: () => {},
+  }
   const robot: StubRobot = {
     renderer: {
       setFace: () => {
         calls.setFace += 1
       },
-      application: {
-        distribute: () => {},
-      },
+      application,
     },
-    application: {
-      addDrawerButton: () => {
-        calls.addDrawerButton += 1
-      },
-    },
+    application,
   }
   return { calls, robot }
 }

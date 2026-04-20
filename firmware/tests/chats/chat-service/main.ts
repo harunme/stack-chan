@@ -50,7 +50,12 @@ assert(instance, 'ChatAudioIO instance should exist')
 if (!instance) {
   throw new Error('ChatAudioIO instance should exist')
 }
-instance.emitState(ChatAudioIOAny.CONNECTED ?? 3)
+const connectedState = ChatAudioIOAny.CONNECTED
+assert(connectedState !== undefined, 'ChatAudioIO CONNECTED constant should exist')
+if (connectedState === undefined) {
+  throw new Error('ChatAudioIO CONNECTED constant should exist')
+}
+instance.emitState(connectedState)
 equal(states[1], 'CONNECTED', 'state should map to CONNECTED')
 
 service.sendText('hello')

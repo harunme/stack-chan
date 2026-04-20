@@ -1,10 +1,16 @@
 import { defaultFaceContext, type FaceContext } from 'face-context'
-import type {
-  Container as PiuContainer,
-  Content as PiuContent,
-  Style as PiuStyle,
-  Text as PiuText,
-  Texture as PiuTexture,
+import {
+  Container,
+  Content,
+  type Container as PiuContainer,
+  type Content as PiuContent,
+  type Style as PiuStyle,
+  type Text as PiuText,
+  type Texture as PiuTexture,
+  Skin,
+  Style,
+  Text,
+  Texture,
 } from 'piu/MC'
 
 let bubbleTexture: PiuTexture | null = null
