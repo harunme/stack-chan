@@ -1,9 +1,9 @@
 import { Outline } from 'commodetto/outline'
+import { defaultFaceContext, type FaceContext } from 'face-context'
 import type { FaceSkinPalette } from 'face-skin'
 import type { Skin as PiuSkin } from 'piu/MC'
 import type { Shape as PiuShape } from 'piu/shape'
-import { defaultFaceContext, type FaceContext } from '../../face-context'
-import { defineShapeTemplate } from '../../template'
+import { defineShapeTemplate } from 'template'
 
 export type DogMouthOptions = {
   cx: number

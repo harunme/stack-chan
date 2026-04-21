@@ -3,7 +3,7 @@ import { defaultFaceContext, type FaceContext } from 'face-context'
 import type { FaceSkinPalette } from 'face-skin'
 import type { Container as PiuContainer, Skin as PiuSkin } from 'piu/MC'
 import type { Shape as PiuShape } from 'piu/shape'
-import { defineShapeTemplate } from '../template'
+import { defineShapeTemplate } from 'template'
 
 export type EyeOptions = {
   cx: number
