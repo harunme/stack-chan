@@ -1,4 +1,17 @@
 {
   "include": ["./manifest.json"],
-  "config": {}
+  "config": {
+    "tts": {
+      "type": "voicevox",
+      "host": "192.168.7.136",
+      "port": 50021
+    },
+    "chat": {
+      "type": "openAIRealtime",
+      "modelID": "gpt-realtime-mini"
+    },
+    "driver": {
+      "type": "none"
+    }
+  }
 }

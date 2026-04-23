@@ -10,8 +10,10 @@ export type ChatState =
   | 'LISTENING'
   | 'WAITING'
 
+export type ChatType = 'deepgramAgent' | 'elevenLabsAgent' | 'googleGeminiLive' | 'humeAIEVI' | 'openAIRealtime'
+
 export type ChatConfig = {
-  specifier: 'deepgramAgent' | 'elevenLabsAgent' | 'googleGeminiLive' | 'humeAIEVI' | 'openAIRealtime'
+  type: ChatType
   instructions?: string
   voiceID?: string
   providerID?: string
@@ -152,22 +154,23 @@ export class ChatService {
         new (chatOptions: Record<string, unknown>): ChatAudioIO
       })
     this.#chat = new ChatAudioIOCtor({
-      specifier: config.specifier as unknown as string,
+      specifier: config.type as unknown as string,
       instructions: config.instructions,
       voiceID: config.voiceID,
       providerID: config.providerID,
       modelID: config.modelID,
       functions: functions.length > 0 ? functions : undefined,
-      onStateChanged: (state) => {
+      onStateChanged: (state: number) => {
         this.#state = mapState(state)
         this.#error = this.#chat.error ?? ''
         this.#callbacks.onStateChanged(this.#state, this.#error || undefined)
       },
-      onInputLevelChanged: (level) => this.#callbacks.onInputLevelChanged(level),
-      onOutputLevelChanged: (level) => this.#callbacks.onOutputLevelChanged(level),
-      onInputTranscript: (text, more) => this.#callbacks.onInputTranscript(text, more),
-      onOutputTranscript: (text, more) => this.#callbacks.onOutputTranscript(text, more),
-      onFunctionCall: (call, name, params) => this.#callbacks.onFunctionCall(call, name, params),
+      onInputLevelChanged: (level: number) => this.#callbacks.onInputLevelChanged(level),
+      onOutputLevelChanged: (level: number) => this.#callbacks.onOutputLevelChanged(level),
+      onInputTranscript: (text: string, more: boolean) => this.#callbacks.onInputTranscript(text, more),
+      onOutputTranscript: (text: string, more: boolean) => this.#callbacks.onOutputTranscript(text, more),
+      onFunctionCall: (call: string, name: string, params: Record<string, unknown>) =>
+        this.#callbacks.onFunctionCall(call, name, params),
     })
   }
 

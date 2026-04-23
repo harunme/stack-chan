@@ -47,6 +47,9 @@
       "drawer": [
         "./stackchan/renderers-piu/drawer"
       ],
+      "mocks/*": [
+        "./tests/chats/mocks/*"
+      ],
       "*": [
         "./node_modules/@moddable/typings/*",
         "./node_modules/@moddable/typings/ble/*",

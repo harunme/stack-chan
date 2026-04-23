@@ -1,9 +1,13 @@
-import type { Container as PiuContainer, Content as PiuContent } from 'piu/MC'
 import { Drawer, type DrawerBehavior, type DrawerButtonSpec } from 'drawer'
+import type {
+  Container as PiuContainer,
+  ContainerDictionary as PiuContainerDictionary,
+  Content as PiuContent,
+} from 'piu/MC'
 
 export type TemplateFunction<TData, TResult> = {
-  new (data?: TData, dictionary?: Record<string, unknown>): TResult
-  template?: (factory: unknown) => TemplateFunction<TData, TResult>
+  new (data?: TData, dictionary?: PiuContainerDictionary): TResult
+  template?<TNextData>(factory: (arg: TNextData) => PiuContainerDictionary): TemplateFunction<TNextData, TResult>
 }
 
 type CommonViewAnchors = {
@@ -14,6 +18,7 @@ type CommonViewAnchors = {
 
 export type CommonViewParams = CommonViewAnchors & {
   main?: PiuContainer
+  appBar?: PiuContent
   drawerButtons?: DrawerButtonSpec[]
 }
 
@@ -139,18 +144,24 @@ export const CommonView: CommonViewTemplateCtor = Container.template(($: CommonV
   const main = $.MAIN ?? $.main
   if (!main) {
     trace('[CommonView] ERROR: Missing main view instance\n')
-    return new Content(null, { top: 0, right: 0, bottom: 0, left: 0 })
+    return { top: 0, right: 0, bottom: 0, left: 0 }
   }
   if (!$.MAIN) {
     $.MAIN = main
   }
-  const appBar = new Content($, {
-    anchor: 'APP_BAR',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 0,
-  })
+  const appBar =
+    $.APP_BAR ??
+    $.appBar ??
+    new Content($, {
+      anchor: 'APP_BAR',
+      left: 0,
+      right: 0,
+      top: 0,
+      height: 0,
+    })
+  if (!$.APP_BAR) {
+    $.APP_BAR = appBar as PiuContent
+  }
   const overlay = new Container($, {
     anchor: 'OVERLAY',
     left: 0,
@@ -181,4 +192,4 @@ export const CommonView: CommonViewTemplateCtor = Container.template(($: CommonV
     contents: [main, appBar, overlay],
     Behavior: CommonViewBehavior,
   }
-})
+}) as unknown as CommonViewTemplateCtor
