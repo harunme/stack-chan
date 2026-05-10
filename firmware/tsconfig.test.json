@@ -4,6 +4,8 @@
     "outDir": "dist-tests",
     "allowJs": false,
     "allowImportingTsExtensions": false,
+    "checkJs": false,
+    "noEmit": false,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
