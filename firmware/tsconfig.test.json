@@ -2,10 +2,11 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "dist-tests",
+    "noEmit": false,
+    "rewriteRelativeImportExtensions": true,
     "allowJs": false,
     "allowImportingTsExtensions": false,
     "checkJs": false,
-    "noEmit": false,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "types": ["node"],
@@ -13,6 +14,8 @@
   },
   "include": [
     "stackchan/drivers/payload-buffer.ts",
+    "stackchan/drivers/m5stackchan-servo.ts",
+    "stackchan/led/py32-io-expander.ts",
     "stackchan/drivers/internal/single-wait-slot.ts",
     "stackchan/drivers/__tests__/**/*.ts",
     "tests/unit/**/*.ts"
