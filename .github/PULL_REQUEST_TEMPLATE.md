@@ -1,10 +1,10 @@
 ## Summary
 
-- 
+-
 
 ## What Changed
 
-- 
+-
 
 ## Verification
 
@@ -29,4 +29,4 @@
 
 ## Related Issues
 
-- 
+-

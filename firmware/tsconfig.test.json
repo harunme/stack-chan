@@ -9,11 +9,18 @@
     "checkJs": false,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "wasm-driver": ["stackchan/drivers/wasm/wasm-driver.ts"]
+    },
     "types": ["node"],
     "skipLibCheck": true
   },
   "include": [
     "stackchan/drivers/payload-buffer.ts",
+    "stackchan/drivers/wasm/**/*.ts",
+    "stackchan/wasm/microphone.ts",
     "stackchan/drivers/m5stackchan-servo.ts",
     "stackchan/led/py32-io-expander.ts",
     "stackchan/drivers/internal/single-wait-slot.ts",

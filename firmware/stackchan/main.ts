@@ -205,21 +205,39 @@ async function main() {
       ...(c && { c: new SimButton(c) }),
     }
   }
+  if (config.wasm) {
+    const { onRobotCreated, onLaunch } = defaultMod
+    const shouldRobotCreate = await (onLaunch?.() ?? true)
+    if (shouldRobotCreate) {
+      const robot = createRobot()
+      await onRobotCreated?.(robot, globalEnv.device)
+    }
+    return
+  }
   await asyncWait(100)
+  trace('[main] check Wi-Fi start\n')
   await checkAndConnectWiFi().catch((msg) => {
     trace(`WiFi connection failed: ${msg}`)
   })
+  trace('[main] check Wi-Fi complete\n')
+  trace('[main] loading default mod\n')
   let { onRobotCreated, onLaunch } = defaultMod
+  trace('[main] checking mod override\n')
   if (Modules.has('mod')) {
     const mod = Modules.importNow('mod') as StackchanMod
     onRobotCreated = mod.onRobotCreated ?? onRobotCreated
     onLaunch = mod.onLaunch ?? onLaunch
   }
   const shouldRobotCreate = await (onLaunch?.() ?? true)
+  trace(`[main] onLaunch shouldRobotCreate=${shouldRobotCreate}\n`)
   if (shouldRobotCreate) {
     const robot = createRobot()
+    trace('[main] robot created\n')
     await onRobotCreated?.(robot, globalEnv.device)
+    trace('[main] onRobotCreated complete\n')
   }
 }
 
-main()
+main().catch((error) => {
+  trace(`[main] error ${error?.message ?? error}\n`)
+})
