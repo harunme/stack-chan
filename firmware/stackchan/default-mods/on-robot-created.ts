@@ -233,6 +233,30 @@ export const onRobotCreated: StackchanMod['onRobotCreated'] = (robot) => {
   })
 
   /**
+   * LED test(Drawer action)
+   */
+  if (Object.keys(robot.led).length) {
+    const ledName = Object.keys(robot.led)[0] as string
+    let isLighting = false
+    const toggleLED = () => {
+      isLighting = !isLighting
+      if (isLighting) {
+        robot.lightRainbow(ledName)
+      } else {
+        robot.lightOff(ledName)
+      }
+      robot.application.setDrawerButtonState('toggleLED', isLighting)
+    }
+    robot.application.addDrawerButton({
+      key: 'toggleLED',
+      label: 'LED',
+      kind: 'toggle',
+      initialState: isLighting,
+      callback: toggleLED,
+    })
+  }
+
+  /**
    * Audio tests (Drawer actions)
    */
   let isAudioTesting = false
