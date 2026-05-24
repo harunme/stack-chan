@@ -130,7 +130,7 @@ export class Robot {
   #driver: Driver
   #button: { [key in ButtonName]: Button }
   #touch: Touch
-  #touchPanel: TouchPanel
+  #touchPanel: TouchPanel | undefined
   #microphone: Microphone
   #camera: RobotCamera
   #tone: Tone
@@ -285,7 +285,7 @@ export class Robot {
    *
    * @returns TouchPanel instance
    */
-  get touchPanel() {
+  get touchPanel(): TouchPanel | undefined {
     return this.#touchPanel
   }
 
