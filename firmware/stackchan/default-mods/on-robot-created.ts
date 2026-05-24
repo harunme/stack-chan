@@ -116,15 +116,19 @@ export const onRobotCreated: StackchanMod['onRobotCreated'] = (robot) => {
     callback: (target) => {
       emotionIndex = (emotionIndex + 1) % emotions.length
       const nextEmotion = emotions[emotionIndex]
+      let canceledPettingMotion = false
       if (pettingRestoreTimer) {
         Timer.clear(pettingRestoreTimer)
         pettingRestoreTimer = undefined
         pettingPreviousEmotion = undefined
+        canceledPettingMotion = true
       }
       if (pettingHoldTimer) {
         Timer.clear(pettingHoldTimer)
         pettingHoldTimer = undefined
+        canceledPettingMotion = true
       }
+      if (canceledPettingMotion) void target.driver.setTorque(false)
       setEmotionWithEffect(target, nextEmotion)
     },
   })
@@ -413,12 +417,18 @@ export const onRobotCreated: StackchanMod['onRobotCreated'] = (robot) => {
               await robot.driver.applyRotation(upRotation, TOUCH_PANEL_PET_MOTION_STEP_SEC)
               pettingHoldTimer = Timer.set(() => {
                 pettingHoldTimer = undefined
-                void robot.driver.applyRotation(upRotation, TOUCH_PANEL_PET_MOTION_STEP_SEC).catch((error) => {
-                  trace(`[TouchPanel] pet hold motion error ${errorMessage(error)}\n`)
-                })
+                void (async () => {
+                  try {
+                    await robot.driver.applyRotation(upRotation, TOUCH_PANEL_PET_MOTION_STEP_SEC)
+                  } catch (error) {
+                    trace(`[TouchPanel] pet hold motion error ${errorMessage(error)}\n`)
+                    await robot.driver.setTorque(false)
+                  }
+                })()
               }, TOUCH_PANEL_PET_MOTION_STEP_MS * 2)
             } catch (error) {
               trace(`[TouchPanel] pet motion error ${errorMessage(error)}\n`)
+              await robot.driver.setTorque(false)
             } finally {
               pettingMotionActive = false
             }
@@ -434,12 +444,15 @@ export const onRobotCreated: StackchanMod['onRobotCreated'] = (robot) => {
             pettingHoldTimer = undefined
           }
           if (pettingPreviousRotation) {
-            void robot.driver
-              .applyRotation(pettingPreviousRotation, TOUCH_PANEL_PET_MOTION_STEP_SEC)
-              .then(() => robot.driver.setTorque(false))
-              .catch((error) => {
+            void (async () => {
+              try {
+                await robot.driver.applyRotation(pettingPreviousRotation, TOUCH_PANEL_PET_MOTION_STEP_SEC)
+              } catch (error) {
                 trace(`[TouchPanel] restore motion error ${errorMessage(error)}\n`)
-              })
+              } finally {
+                await robot.driver.setTorque(false)
+              }
+            })()
           }
           pettingPreviousEmotion = undefined
           pettingPreviousRotation = undefined
