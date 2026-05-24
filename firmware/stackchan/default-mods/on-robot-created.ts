@@ -30,6 +30,10 @@ const UP = {
 }
 const RECORD_PLAYBACK_DURATION_MS = 2000
 const CAMERA_PREVIEW_DURATION_MS = 5000
+const TOUCH_PANEL_PETTING_WINDOW_MS = 1500
+const TOUCH_PANEL_HAPPY_DURATION_MS = 5000
+const TOUCH_PANEL_PET_MOTION_STEP_MS = 220
+const TOUCH_PANEL_PET_MOTION_STEP_SEC = TOUCH_PANEL_PET_MOTION_STEP_MS / 1000
 
 function errorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
@@ -40,9 +44,38 @@ function errorMessage(error: unknown): string {
 
 export const onRobotCreated: StackchanMod['onRobotCreated'] = (robot) => {
   const emotions = [Emotion.HAPPY, Emotion.ANGRY, Emotion.SAD, Emotion.HOT, Emotion.SLEEPY, Emotion.NEUTRAL]
-  let emotionIndex = 0
+  let emotionIndex = emotions.indexOf(Emotion.NEUTRAL)
   let speechVisible = false
   let emoticonEffect: PiuContent | null = null
+  let currentEmotion = Emotion.NEUTRAL
+  let pettingRestoreTimer: ReturnType<typeof Timer.set> | undefined
+  let pettingPreviousEmotion: Emotion | undefined
+  let pettingPreviousRotation: typeof robot.pose.body.rotation | undefined
+  let pettingMotionActive = false
+  let pettingHoldTimer: ReturnType<typeof Timer.set> | undefined
+  const emotionKeyMap: Record<Emotion, EmoticonKey | null> = {
+    [Emotion.HAPPY]: 'heart',
+    [Emotion.ANGRY]: 'angry',
+    [Emotion.SAD]: 'tear',
+    [Emotion.HOT]: 'sweat',
+    [Emotion.SLEEPY]: 'sleepy',
+    [Emotion.NEUTRAL]: null,
+    [Emotion.DOUBTFUL]: null,
+    [Emotion.COLD]: null,
+  }
+  const setEmotionWithEffect = (target: typeof robot, nextEmotion: Emotion) => {
+    currentEmotion = nextEmotion
+    target.setEmotion(nextEmotion)
+    if (emoticonEffect) {
+      target.renderer?.removeDecorator(emoticonEffect)
+      emoticonEffect = null
+    }
+    const key = emotionKeyMap[nextEmotion]
+    if (key) {
+      emoticonEffect = new Emoticon({ key, name: 'emotion' })
+      target.renderer?.addDecorator(emoticonEffect)
+    }
+  }
 
   let faceMode: 'simple' | 'dog' | 'image' = 'simple'
   let cameraPreviewTimer: ReturnType<typeof Timer.set> | undefined
@@ -83,26 +116,16 @@ export const onRobotCreated: StackchanMod['onRobotCreated'] = (robot) => {
     callback: (target) => {
       emotionIndex = (emotionIndex + 1) % emotions.length
       const nextEmotion = emotions[emotionIndex]
-      target.setEmotion(nextEmotion)
-      if (emoticonEffect) {
-        target.renderer?.removeDecorator(emoticonEffect)
-        emoticonEffect = null
+      if (pettingRestoreTimer) {
+        Timer.clear(pettingRestoreTimer)
+        pettingRestoreTimer = undefined
+        pettingPreviousEmotion = undefined
       }
-      const emotionKeyMap: Record<Emotion, EmoticonKey | null> = {
-        [Emotion.HAPPY]: 'heart',
-        [Emotion.ANGRY]: 'angry',
-        [Emotion.SAD]: 'tear',
-        [Emotion.HOT]: 'sweat',
-        [Emotion.SLEEPY]: 'sleepy',
-        [Emotion.NEUTRAL]: null,
-        [Emotion.DOUBTFUL]: null,
-        [Emotion.COLD]: null,
+      if (pettingHoldTimer) {
+        Timer.clear(pettingHoldTimer)
+        pettingHoldTimer = undefined
       }
-      const key = emotionKeyMap[nextEmotion]
-      if (key) {
-        emoticonEffect = new Emoticon({ key, name: 'emotion' })
-        target.renderer?.addDecorator(emoticonEffect)
-      }
+      setEmotionWithEffect(target, nextEmotion)
     },
   })
   robot.application.addDrawerButton({
@@ -333,6 +356,98 @@ export const onRobotCreated: StackchanMod['onRobotCreated'] = (robot) => {
         return
       }
       toggleColor()
+    }
+  }
+
+  if (robot.touchPanel != null) {
+    let lastForwardSwipeTicks: number | undefined
+    let lastBackwardSwipeTicks: number | undefined
+    robot.touchPanel.onGesture = (gesture) => {
+      trace(`[TouchPanel] gesture: ${gesture.type}\n`)
+      if (gesture.type !== 'forwardSwipe' && gesture.type !== 'backwardSwipe') return
+
+      if (gesture.type === 'forwardSwipe') lastForwardSwipeTicks = gesture.ticks
+      else lastBackwardSwipeTicks = gesture.ticks
+
+      const hasRecentForwardSwipe =
+        lastForwardSwipeTicks !== undefined && gesture.ticks - lastForwardSwipeTicks <= TOUCH_PANEL_PETTING_WINDOW_MS
+      const hasRecentBackwardSwipe =
+        lastBackwardSwipeTicks !== undefined && gesture.ticks - lastBackwardSwipeTicks <= TOUCH_PANEL_PETTING_WINDOW_MS
+      if (hasRecentForwardSwipe && hasRecentBackwardSwipe) {
+        trace('[TouchPanel] petting detected: set emotion HAPPY with heart effect\n')
+        if (pettingPreviousEmotion === undefined) pettingPreviousEmotion = currentEmotion
+        if (pettingPreviousRotation === undefined) pettingPreviousRotation = { ...robot.pose.body.rotation }
+        if (pettingRestoreTimer) Timer.clear(pettingRestoreTimer)
+        if (pettingHoldTimer) {
+          Timer.clear(pettingHoldTimer)
+          pettingHoldTimer = undefined
+        }
+        emotionIndex = emotions.indexOf(Emotion.HAPPY)
+        setEmotionWithEffect(robot, Emotion.HAPPY)
+        if (!pettingMotionActive) {
+          pettingMotionActive = true
+          const baseRotation = pettingPreviousRotation
+          const yawAmount = randomBetween(Math.PI / 15, Math.PI / 10)
+          const pitch = Math.max(-Math.PI / 4, baseRotation.p - randomBetween(Math.PI / 10, Math.PI / 8))
+          const firstDirection = Math.random() < 0.5 ? -1 : 1
+          const upRotation = { ...baseRotation, p: pitch }
+          const leftRight = (direction: number) => ({
+            ...baseRotation,
+            p: pitch,
+            y: Math.max(-Math.PI / 6, Math.min(Math.PI / 6, baseRotation.y + direction * yawAmount)),
+          })
+          trace(
+            `[TouchPanel] pet motion shake yaw=${yawAmount.toFixed(3)} pitch=${pitch.toFixed(3)} direction=${firstDirection}\n`,
+          )
+          void (async () => {
+            try {
+              await robot.driver.setTorque(true)
+              // Multiple visible steps make this read as head shaking, not a single pose change.
+              await robot.driver.applyRotation(leftRight(firstDirection), TOUCH_PANEL_PET_MOTION_STEP_SEC)
+              await asyncWait(TOUCH_PANEL_PET_MOTION_STEP_MS)
+              await robot.driver.applyRotation(leftRight(-firstDirection), TOUCH_PANEL_PET_MOTION_STEP_SEC)
+              await asyncWait(TOUCH_PANEL_PET_MOTION_STEP_MS)
+              await robot.driver.applyRotation(leftRight(firstDirection * 0.55), TOUCH_PANEL_PET_MOTION_STEP_SEC)
+              await asyncWait(TOUCH_PANEL_PET_MOTION_STEP_MS)
+              // Keep the happy reaction looking upward until the restore timer returns to the original pose.
+              await robot.driver.applyRotation(upRotation, TOUCH_PANEL_PET_MOTION_STEP_SEC)
+              pettingHoldTimer = Timer.set(() => {
+                pettingHoldTimer = undefined
+                void robot.driver.applyRotation(upRotation, TOUCH_PANEL_PET_MOTION_STEP_SEC).catch((error) => {
+                  trace(`[TouchPanel] pet hold motion error ${errorMessage(error)}\n`)
+                })
+              }, TOUCH_PANEL_PET_MOTION_STEP_MS * 2)
+            } catch (error) {
+              trace(`[TouchPanel] pet motion error ${errorMessage(error)}\n`)
+            } finally {
+              pettingMotionActive = false
+            }
+          })()
+        }
+        pettingRestoreTimer = Timer.set(() => {
+          const restoreEmotion = pettingPreviousEmotion ?? Emotion.NEUTRAL
+          trace(`[TouchPanel] restore emotion ${restoreEmotion}\n`)
+          emotionIndex = Math.max(0, emotions.indexOf(restoreEmotion))
+          setEmotionWithEffect(robot, restoreEmotion)
+          if (pettingHoldTimer) {
+            Timer.clear(pettingHoldTimer)
+            pettingHoldTimer = undefined
+          }
+          if (pettingPreviousRotation) {
+            void robot.driver
+              .applyRotation(pettingPreviousRotation, TOUCH_PANEL_PET_MOTION_STEP_SEC)
+              .then(() => robot.driver.setTorque(false))
+              .catch((error) => {
+                trace(`[TouchPanel] restore motion error ${errorMessage(error)}\n`)
+              })
+          }
+          pettingPreviousEmotion = undefined
+          pettingPreviousRotation = undefined
+          pettingRestoreTimer = undefined
+        }, TOUCH_PANEL_HAPPY_DURATION_MS)
+        lastForwardSwipeTicks = undefined
+        lastBackwardSwipeTicks = undefined
+      }
     }
   }
 }
