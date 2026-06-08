@@ -4,10 +4,10 @@
     "$(MODDABLE)/examples/manifest_net.json",
     "$(MODDABLE)/examples/manifest_typings.json",
     "$(MODDABLE)/examples/io/tcp/websocket/manifest_websocket.json",
+    "$(MODULES)/network/wifi/manifest.json",
     "$(MODULES)/network/ble/manifest_server.json",
     "$(MODULES)/network/ble/manifest_client.json",
     "$(MODULES)/network/mdns/manifest.json",
-    "$(MODULES)/network/wifi/manifest.json",
     "../utilities/manifest_utility.json",
     "./http-server/manifest.json",
     "./mcp-server/manifest.json",
@@ -20,8 +20,10 @@
       "../../typings/btutils",
       "../../typings/uartserver"
     ],
+    "wifi/connection": "$(MODDABLE)/examples/network/wifi/wificonnection/wificonnection",
     "ChatAudioIO": "./chat-audioio-stub"
   },
+  "preload": ["wifi/connection"],
   "platforms": {
     "esp32/m5stack_cores3": {
       "include": ["$(MODULES)/network/services/chatAudioIO/manifest.json"],
