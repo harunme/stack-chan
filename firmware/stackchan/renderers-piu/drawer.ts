@@ -2,13 +2,13 @@ import {
   Column,
   Container,
   Content,
+  type Coordinates,
   Label,
+  type Container as PiuContainer,
+  type Content as PiuContent,
   Scroller,
   Skin,
   Style,
-  type Coordinates,
-  type Container as PiuContainer,
-  type Content as PiuContent,
 } from 'piu/MC'
 import Timeline from 'piu/Timeline'
 
@@ -195,7 +195,7 @@ export const Drawer: DrawerTemplateCtor = Container.template((d: DrawerDictionar
       timeline: Timeline | null = null
       offset = drawerHiddenOffset
 
-      onCreate(container: PiuContainer, data?: DrawerDictionary) {
+      onCreate(container: PiuContainer, _data?: DrawerDictionary) {
         container.interval = 16
         this.applyPosition(container, this.offset)
       }

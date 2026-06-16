@@ -1,10 +1,10 @@
-import { Application, Column, Container, Label, Skin, Style } from 'piu/MC'
 import type {
   Application as PiuApplication,
   Container as PiuContainer,
   Skin as PiuSkin,
   Style as PiuStyle,
 } from 'piu/MC'
+import { Application, Column, Container, Label, Skin, Style } from 'piu/MC'
 
 export type StartupSplashOptions = {
   onTouch?: () => void

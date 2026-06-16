@@ -60,8 +60,11 @@ describe('startup splash screen', () => {
     assert.match(source, /type StartupChoice = 'boot' \| 'settings'/)
     assert.match(source, /const STARTUP_AUTO_BOOT_DELAY_MS = 3000/)
     assert.match(source, /function waitForStartupChoice/)
-    assert.match(source, /showStartupSplash\(\{ onTouch: \(\) => Timer\.set\(\(\) => choose\('settings'\), 0\) \}\)/)
-    assert.match(source, /choose\('boot'\)/)
+    assert.match(
+      source,
+      /showStartupSplash\(\{ onTouch: \(\) => Timer\.set\(\(\) => choose\('settings', application\), 0\) \}\)/,
+    )
+    assert.match(source, /choose\('boot', application\)/)
     assert.match(source, /resolve\(\{ choice, application \}\)/)
     assert.match(source, /startupChoice\.choice === 'boot'/)
   })

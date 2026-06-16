@@ -1,11 +1,12 @@
 /* eslint-disable prefer-const */
+
+import type HTTPClient from 'embedded:network/http/client'
+import calculatePower from 'calculate-power'
+import { File } from 'file'
+import Headers from 'headers'
+import config from 'mc/config'
 import AudioOut from 'pins/audioout'
 import WavStreamer from 'wavstreamer'
-import calculatePower from 'calculate-power'
-import type HTTPClient from 'embedded:network/http/client'
-import Headers from 'headers'
-import { File } from 'file'
-import config from 'mc/config'
 
 const QUERY_PATH = `${config.file.root}query.json`
 
@@ -66,7 +67,6 @@ export class TTS {
         method: 'POST',
         path: encodeURI(`/audio_query?text=${text}&speaker=${speakerId}`),
         // TODO: https://github.com/Moddable-OpenSource/moddable/pull/1420
-        // @ts-ignore
         headers: new Headers([['Content-Type', 'application/x-www-form-urlencoded']]),
         onHeaders(status) {
           if (status !== 200) {

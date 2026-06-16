@@ -1,6 +1,6 @@
 import type { StackchanMod } from 'default-mods/mod'
-import Timer from 'timer'
 import { showStartupSplash } from 'startup-splash'
+import Timer from 'timer'
 
 const SPLASH_VISIBLE_MS = 8000
 

@@ -1,8 +1,8 @@
-import WiFi from 'wifi/connection'
-import Net from 'net'
-import Time from 'time'
 import config from 'mc/config'
+import Net from 'net'
 import SNTP from 'sntp'
+import Time from 'time'
+import WiFi from 'wifi/connection'
 
 const MAX_SCANS = 3
 export class NetworkService {

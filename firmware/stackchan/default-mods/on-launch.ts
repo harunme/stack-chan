@@ -1,11 +1,11 @@
-import { Column, Container, Label, Skin, Style } from 'piu/MC'
-import type { Application as PiuApplication, Label as PiuLabel } from 'piu/MC'
-import { NetworkService } from 'network-service'
-import { showStartupSplash } from 'startup-splash'
-import { PreferenceServer } from 'preference-server'
-import Preference from 'preference'
-import type { StackchanMod } from 'default-mods/mod'
 import { DOMAIN, PREF_KEYS } from 'consts'
+import type { StackchanMod } from 'default-mods/mod'
+import { NetworkService } from 'network-service'
+import type { Application as PiuApplication, Label as PiuLabel } from 'piu/MC'
+import { Column, Container, Label, Skin, Style } from 'piu/MC'
+import Preference from 'preference'
+import { PreferenceServer } from 'preference-server'
+import { showStartupSplash } from 'startup-splash'
 import Timer from 'timer'
 
 type StartupChoice = 'boot' | 'settings'
@@ -120,17 +120,15 @@ type StartupChoiceResult = {
 function waitForStartupChoice(): Promise<StartupChoiceResult> {
   return new Promise((resolve) => {
     let isResolved = false
-    let handle: ReturnType<typeof Timer.set> | undefined
-    let application: PiuApplication
-    const choose = (choice: StartupChoice) => {
+    const choose = (choice: StartupChoice, application: PiuApplication) => {
       if (isResolved) return
       isResolved = true
-      if (handle) Timer.clear(handle)
+      Timer.clear(handle)
       resolve({ choice, application })
     }
 
-    application = showStartupSplash({ onTouch: () => Timer.set(() => choose('settings'), 0) })
-    handle = Timer.set(() => choose('boot'), STARTUP_AUTO_BOOT_DELAY_MS)
+    const application = showStartupSplash({ onTouch: () => Timer.set(() => choose('settings', application), 0) })
+    const handle = Timer.set(() => choose('boot', application), STARTUP_AUTO_BOOT_DELAY_MS)
   })
 }
 
